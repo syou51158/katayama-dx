@@ -202,24 +202,45 @@ const Reports = () => {
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
+      setError('');
+      
       try {
+        console.log('Fetching data for reports page with user:', user?.id);
+        
         // 工事現場データの取得
-        const sitesData = await constructionSitesApi.getAllSites();
-        setSites(sitesData);
+        try {
+          const sitesData = await constructionSitesApi.getAllSites();
+          setSites(sitesData);
+          console.log('Sites loaded successfully:', sitesData.length);
+        } catch (sitesErr: any) {
+          console.error('工事現場データの取得に失敗しました', sitesErr);
+          setError(`工事現場データの取得に失敗しました: ${sitesErr.message || '不明なエラー'}`);
+        }
         
         // 日報データの取得
-        const reportsData = await constructionReportsApi.getReports(filter);
-        setReports(reportsData);
-      } catch (err) {
+        try {
+          const reportsData = await constructionReportsApi.getReports(filter);
+          setReports(reportsData);
+          console.log('Reports loaded successfully:', reportsData.length);
+        } catch (reportsErr: any) {
+          console.error('日報データの取得に失敗しました', reportsErr);
+          setError(`日報データの取得に失敗しました: ${reportsErr.message || '不明なエラー'}`);
+        }
+      } catch (err: any) {
         console.error('データの取得に失敗しました', err);
-        setError('データの取得に失敗しました');
+        setError(`データの取得に失敗しました: ${err.message || '不明なエラー'}`);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchData();
-  }, [filter]);
+    if (user) {
+      fetchData();
+    } else {
+      setLoading(false);
+      setError('ログインしているユーザーが見つかりません。再度ログインしてください。');
+    }
+  }, [filter, user]);
 
   return (
     <div className="p-6">

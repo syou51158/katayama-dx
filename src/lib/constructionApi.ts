@@ -13,44 +13,78 @@ import type {
 export const constructionSitesApi = {
   // 全工事現場の取得
   async getAllSites(): Promise<ConstructionSite[]> {
-    const { data, error } = await supabase
-      .from('construction_sites')
-      .select(`
-        *,
-        customers(name),
-        users!construction_sites_manager_id_fkey(name)
-      `)
-      .order('name');
+    console.log('getAllSites called');
+    try {
+      const { data, error } = await supabase
+        .from('construction_sites')
+        .select(`
+          *,
+          customers(name),
+          users!construction_sites_manager_id_fkey(first_name, last_name)
+        `)
+        .order('name');
 
-    if (error) throw error;
+      if (error) {
+        console.error('Error fetching construction sites:', error);
+        throw error;
+      }
 
-    // 関連データを適切にマッピング
-    return data.map(site => ({
-      ...site,
-      client_name: site.customers?.name,
-      manager_name: site.users?.name
-    }));
+      console.log('Sites data fetched:', data?.length || 0);
+
+      // 関連データを適切にマッピング
+      return data.map(site => {
+        // ユーザー名をフォーマット
+        const firstName = site.users?.first_name || '';
+        const lastName = site.users?.last_name || '';
+        const managerName = firstName && lastName ? `${lastName} ${firstName}` : '';
+
+        return {
+          ...site,
+          client_name: site.customers?.name,
+          manager_name: managerName
+        };
+      });
+    } catch (error) {
+      console.error('Error in getAllSites:', error);
+      throw error;
+    }
   },
 
   // 特定の工事現場の取得
   async getSiteById(id: string): Promise<ConstructionSite> {
-    const { data, error } = await supabase
-      .from('construction_sites')
-      .select(`
-        *,
-        customers(name),
-        users!construction_sites_manager_id_fkey(name)
-      `)
-      .eq('id', id)
-      .single();
+    console.log('getSiteById called for:', id);
+    try {
+      const { data, error } = await supabase
+        .from('construction_sites')
+        .select(`
+          *,
+          customers(name),
+          users!construction_sites_manager_id_fkey(first_name, last_name)
+        `)
+        .eq('id', id)
+        .single();
 
-    if (error) throw error;
+      if (error) {
+        console.error(`Error fetching construction site ${id}:`, error);
+        throw error;
+      }
 
-    return {
-      ...data,
-      client_name: data.customers?.name,
-      manager_name: data.users?.name
-    };
+      console.log('Site data fetched:', data?.id);
+
+      // ユーザー名をフォーマット
+      const firstName = data.users?.first_name || '';
+      const lastName = data.users?.last_name || '';
+      const managerName = firstName && lastName ? `${lastName} ${firstName}` : '';
+
+      return {
+        ...data,
+        client_name: data.customers?.name,
+        manager_name: managerName
+      };
+    } catch (error) {
+      console.error(`Error in getSiteById for ${id}:`, error);
+      throw error;
+    }
   },
 
   // 工事現場の新規作成
@@ -99,108 +133,177 @@ export const constructionSitesApi = {
 export const constructionReportsApi = {
   // 日報の取得（フィルタリング可能）
   async getReports(filter?: ReportFilter): Promise<ConstructionReport[]> {
-    let query = supabase
-      .from('construction_reports')
-      .select(`
-        *,
-        construction_sites(name),
-        users(name)
-      `)
-      .order('report_date', { ascending: false });
+    console.log('getReports called with filter:', filter);
+    try {
+      let query = supabase
+        .from('construction_reports')
+        .select(`
+          *,
+          construction_sites(id, name),
+          users(id, first_name, last_name)
+        `)
+        .order('report_date', { ascending: false });
 
-    // フィルタの適用
-    if (filter) {
-      if (filter.site_id) {
-        query = query.eq('site_id', filter.site_id);
+      // フィルタの適用
+      if (filter) {
+        if (filter.site_id) {
+          query = query.eq('site_id', filter.site_id);
+        }
+        if (filter.user_id) {
+          query = query.eq('user_id', filter.user_id);
+        }
+        if (filter.start_date) {
+          query = query.gte('report_date', filter.start_date);
+        }
+        if (filter.end_date) {
+          query = query.lte('report_date', filter.end_date);
+        }
       }
-      if (filter.user_id) {
-        query = query.eq('user_id', filter.user_id);
+
+      console.log('Executing Supabase query for construction reports');
+      const { data, error } = await query;
+
+      if (error) {
+        console.error('Error fetching construction reports:', error);
+        throw error;
       }
-      if (filter.start_date) {
-        query = query.gte('report_date', filter.start_date);
-      }
-      if (filter.end_date) {
-        query = query.lte('report_date', filter.end_date);
-      }
+
+      console.log('Reports fetched successfully:', data?.length || 0);
+
+      // 関連データの取得
+      const reports = await Promise.all(
+        data.map(async (report) => {
+          try {
+            // 資材使用記録の取得
+            const { data: materials, error: materialsError } = await supabase
+              .from('material_usages')
+              .select('*')
+              .eq('report_id', report.id);
+
+            if (materialsError) {
+              console.error(`Error fetching materials for report ${report.id}:`, materialsError);
+            }
+
+            // 機材使用記録の取得
+            const { data: equipment, error: equipmentError } = await supabase
+              .from('equipment_usages')
+              .select('*')
+              .eq('report_id', report.id);
+
+            if (equipmentError) {
+              console.error(`Error fetching equipment for report ${report.id}:`, equipmentError);
+            }
+
+            // 作業員記録の取得
+            const { data: workers, error: workersError } = await supabase
+              .from('worker_attendances')
+              .select('*')
+              .eq('report_id', report.id);
+
+            if (workersError) {
+              console.error(`Error fetching workers for report ${report.id}:`, workersError);
+            }
+
+            // ユーザー名をフォーマット
+            const firstName = report.users?.first_name || '';
+            const lastName = report.users?.last_name || '';
+            const userName = firstName && lastName ? `${lastName} ${firstName}` : 'Unknown';
+
+            return {
+              ...report,
+              site_name: report.construction_sites?.name || 'Unknown',
+              user_name: userName,
+              materials: materials || [],
+              equipment: equipment || [],
+              workers: workers || []
+            };
+          } catch (err) {
+            console.error(`Error processing report ${report.id}:`, err);
+            return {
+              ...report,
+              site_name: report.construction_sites?.name || 'Unknown',
+              user_name: 'Error',
+              materials: [],
+              equipment: [],
+              workers: []
+            };
+          }
+        })
+      );
+
+      return reports;
+    } catch (error) {
+      console.error('Error in getReports:', error);
+      throw error;
     }
-
-    const { data, error } = await query;
-
-    if (error) throw error;
-
-    // 関連データの取得
-    const reports = await Promise.all(
-      data.map(async (report) => {
-        // 資材使用記録の取得
-        const { data: materials } = await supabase
-          .from('material_usages')
-          .select('*')
-          .eq('report_id', report.id);
-
-        // 機材使用記録の取得
-        const { data: equipment } = await supabase
-          .from('equipment_usages')
-          .select('*')
-          .eq('report_id', report.id);
-
-        // 作業員記録の取得
-        const { data: workers } = await supabase
-          .from('worker_attendances')
-          .select('*')
-          .eq('report_id', report.id);
-
-        return {
-          ...report,
-          site_name: report.construction_sites?.name,
-          user_name: report.users?.name,
-          materials: materials || [],
-          equipment: equipment || [],
-          workers: workers || []
-        };
-      })
-    );
-
-    return reports;
   },
 
   // 特定の日報の取得
   async getReportById(id: string): Promise<ConstructionReport> {
-    const { data, error } = await supabase
-      .from('construction_reports')
-      .select(`
-        *,
-        construction_sites(name),
-        users(name)
-      `)
-      .eq('id', id)
-      .single();
+    console.log('getReportById called for:', id);
+    try {
+      const { data, error } = await supabase
+        .from('construction_reports')
+        .select(`
+          *,
+          construction_sites(name),
+          users(first_name, last_name)
+        `)
+        .eq('id', id)
+        .single();
 
-    if (error) throw error;
+      if (error) {
+        console.error(`Error fetching report ${id}:`, error);
+        throw error;
+      }
 
-    // 関連データの取得
-    const { data: materials } = await supabase
-      .from('material_usages')
-      .select('*')
-      .eq('report_id', id);
+      console.log('Report data fetched:', data?.id);
 
-    const { data: equipment } = await supabase
-      .from('equipment_usages')
-      .select('*')
-      .eq('report_id', id);
+      // 関連データの取得
+      const { data: materials, error: materialsError } = await supabase
+        .from('material_usages')
+        .select('*')
+        .eq('report_id', id);
 
-    const { data: workers } = await supabase
-      .from('worker_attendances')
-      .select('*')
-      .eq('report_id', id);
+      if (materialsError) {
+        console.error(`Error fetching materials for report ${id}:`, materialsError);
+      }
 
-    return {
-      ...data,
-      site_name: data.construction_sites?.name,
-      user_name: data.users?.name,
-      materials: materials || [],
-      equipment: equipment || [],
-      workers: workers || []
-    };
+      const { data: equipment, error: equipmentError } = await supabase
+        .from('equipment_usages')
+        .select('*')
+        .eq('report_id', id);
+
+      if (equipmentError) {
+        console.error(`Error fetching equipment for report ${id}:`, equipmentError);
+      }
+
+      const { data: workers, error: workersError } = await supabase
+        .from('worker_attendances')
+        .select('*')
+        .eq('report_id', id);
+
+      if (workersError) {
+        console.error(`Error fetching workers for report ${id}:`, workersError);
+      }
+
+      // ユーザー名をフォーマット
+      const firstName = data.users?.first_name || '';
+      const lastName = data.users?.last_name || '';
+      const userName = firstName && lastName ? `${lastName} ${firstName}` : '';
+
+      return {
+        ...data,
+        site_name: data.construction_sites?.name,
+        user_name: userName,
+        materials: materials || [],
+        equipment: equipment || [],
+        workers: workers || []
+      };
+    } catch (error) {
+      console.error(`Error in getReportById for ${id}:`, error);
+      throw error;
+    }
   },
 
   // 日報の作成（関連データを含む）

@@ -7,7 +7,7 @@ const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIU
 
 // デバッグ用にコンソールに出力
 console.log('Supabase URL:', supabaseUrl);
-console.log('Supabase Key length:', supabaseAnonKey ? supabaseAnonKey.length : 0);
+console.log('Supabase Key:', supabaseAnonKey ? supabaseAnonKey.substring(0, 10) + '...' : 'not available');
 console.log('Supabase Key is valid:', supabaseAnonKey?.includes('.') || false);
 
 // クライアント作成を試みる
@@ -15,7 +15,14 @@ let supabaseClient;
 try {
   supabaseClient = createClient<Database>(
     supabaseUrl,
-    supabaseAnonKey
+    supabaseAnonKey,
+    {
+      auth: {
+        persistSession: true,
+        autoRefreshToken: true,
+        detectSessionInUrl: true
+      }
+    }
   );
   console.log('Supabaseクライアント作成成功');
 } catch (error) {
