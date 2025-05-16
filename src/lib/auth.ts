@@ -6,8 +6,13 @@ function getRedirectUrl(path: string): string {
   const origin = window.location.origin;
   console.log('Current origin:', origin);
   
-  // 開発環境ではポート番号が変わることがあるので、URLをログ出力
-  const redirectUrl = `${origin}${path}`;
+  // GitHub Pagesの場合はハッシュルーターを考慮
+  const basePath = window.location.pathname.endsWith('/') 
+    ? window.location.pathname 
+    : window.location.pathname + '/';
+  
+  // ハッシュルーターを使用しているため、リダイレクト先には#を含める
+  const redirectUrl = `${origin}${basePath}#${path}`;
   console.log('Generated redirect URL:', redirectUrl);
   
   return redirectUrl;
