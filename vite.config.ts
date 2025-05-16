@@ -11,8 +11,13 @@ export default defineConfig(({ mode }) => {
   console.log('VITE_SUPABASE_URL:', env.VITE_SUPABASE_URL ? '設定されています' : '設定されていません');
   console.log('VITE_SUPABASE_ANON_KEY:', env.VITE_SUPABASE_ANON_KEY ? '設定されています' : '設定されていません');
   
+  // GitHub Pagesのリポジトリ名を取得（環境変数から、または空文字列をデフォルトとする）
+  const repoName = env.VITE_REPO_NAME || 'katayama-dx-app';
+  const base = mode === 'production' ? `/${repoName}/` : '/';
+  
   return {
     plugins: [react()],
+    base,
     define: {
       // 環境変数をグローバルに定義
       'import.meta.env.VITE_SUPABASE_URL': JSON.stringify(env.VITE_SUPABASE_URL || 'https://iygiuutslpnvrheqbqgv.supabase.co'),
