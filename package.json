@@ -1,17 +1,19 @@
 {
   "name": "katayama-dx-app",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.0.0",
+  "description": "片山建設工業向けDXアプリケーション",
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "import-sample-data": "node insert_sample_data.js"
   },
   "dependencies": {
     "@headlessui/react": "^2.2.3",
-    "@supabase/supabase-js": "^2.49.4",
+    "@supabase/supabase-js": "^2.38.4",
     "autoprefixer": "^10.4.17",
     "postcss": "^8.4.35",
     "postcss-nested": "^7.0.2",
