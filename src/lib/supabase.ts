@@ -20,11 +20,35 @@ try {
       auth: {
         persistSession: true,
         autoRefreshToken: true,
-        detectSessionInUrl: true
+        detectSessionInUrl: true,
+        flowType: 'pkce',
+        debug: true
       }
     }
   );
   console.log('Supabaseクライアント作成成功');
+  
+  // マジックリンクからのリダイレクト処理を強化
+  // URLにアクセストークンパラメータがある場合、ログイン後の処理
+  const url = new URL(window.location.href);
+  const hasLoginParams = url.hash.includes('access_token') || url.hash.includes('error_code');
+  
+  if (hasLoginParams) {
+    console.log('ログイン/認証パラメータを検出: ', url.hash);
+    
+    // エラーがある場合の処理
+    if (url.hash.includes('error')) {
+      console.error('認証エラー:', url.hash);
+    } else {
+      // 成功時の処理 - URLパラメータ処理完了後にダッシュボードへリダイレクト
+      // 少し遅延させてセッション確立を確実にする
+      setTimeout(() => {
+        console.log('認証成功後にダッシュボードへリダイレクト');
+        window.location.href = '/#/dashboard';
+      }, 500);
+    }
+  }
+  
 } catch (error) {
   console.error('Supabaseクライアント作成エラー:', error);
   throw error;
