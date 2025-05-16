@@ -15,6 +15,12 @@ const Attendance = lazy(() => import('./pages/Attendance'))
 const Leave = lazy(() => import('./pages/Leave'))
 const EnvCheck = lazy(() => import('./envcheck'))
 
+// 日報機能コンポーネント
+const ReportNew = lazy(() => import('./pages/ReportNew'))
+const Reports = lazy(() => import('./pages/Reports'))
+const ReportMonthly = lazy(() => import('./pages/ReportMonthly'))
+const ConstructionSites = lazy(() => import('./pages/ConstructionSites'))
+
 // 仮のページコンポーネント（未実装ページ用）
 const PlaceholderPage = ({ title }: { title: string }) => (
   <div className="p-6">
@@ -26,9 +32,6 @@ const PlaceholderPage = ({ title }: { title: string }) => (
 );
 
 // 未実装ページの仮のコンポーネント
-const ReportNew = () => <PlaceholderPage title="日報入力" />;
-const Reports = () => <PlaceholderPage title="日報一覧" />;
-const ReportMonthly = () => <PlaceholderPage title="月次レポート" />;
 const AdminMaster = () => <PlaceholderPage title="マスター管理" />;
 const AdminSettings = () => <PlaceholderPage title="システム設定" />;
 
@@ -87,6 +90,7 @@ function App() {
                 <Route index element={<Reports />} />
                 <Route path="monthly" element={<ReportMonthly />} />
               </Route>
+              <Route path="sites" element={<ConstructionSites />} />
               <Route path="admin">
                 <Route path="master" element={<AdminMaster />} />
                 <Route path="settings" element={<AdminSettings />} />

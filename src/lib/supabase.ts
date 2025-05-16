@@ -1,22 +1,27 @@
 import { createClient } from '@supabase/supabase-js';
 import type { Database } from '../types/supabase';
 
-// 環境変数からSupabase認証情報を取得
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+// 環境変数から認証情報を取得し、取得できない場合はハードコードされた値を使用
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://iygiuutslpnvrheqbqgv.supabase.co';
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Iml5Z2l1dXRzbHBudnJoZXFicWd2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcyNjkzNzksImV4cCI6MjA2Mjg0NTM3OX0.skNBoqKqMl69jLLCyGvfS6CUY7TiCftaUOuLlrdUl10';
 
 // デバッグ用にコンソールに出力
 console.log('Supabase URL:', supabaseUrl);
-console.log('Supabase Key:', supabaseAnonKey ? 'キーが設定されています' : 'キーが設定されていません');
+console.log('Supabase Key length:', supabaseAnonKey ? supabaseAnonKey.length : 0);
+console.log('Supabase Key is valid:', supabaseAnonKey?.includes('.') || false);
 
-// 環境変数が設定されていない場合のエラーハンドリング
-if (!supabaseUrl || !supabaseAnonKey) {
-  console.error('Supabase URLまたはAnon Keyが設定されていません。.env.localファイルを確認してください。');
-  alert('Supabase接続情報が見つかりません。.env.localファイルを確認してください。');
+// クライアント作成を試みる
+let supabaseClient;
+try {
+  supabaseClient = createClient<Database>(
+    supabaseUrl,
+    supabaseAnonKey
+  );
+  console.log('Supabaseクライアント作成成功');
+} catch (error) {
+  console.error('Supabaseクライアント作成エラー:', error);
+  throw error;
 }
 
-// Supabaseクライアントの作成 
-export const supabase = createClient<Database>(
-  supabaseUrl || 'https://example.supabase.co',  // 暫定的なダミー値を設定
-  supabaseAnonKey || 'dummy-key'  // 暫定的なダミー値を設定 
-);
+// 作成したクライアントをエクスポート
+export const supabase = supabaseClient;

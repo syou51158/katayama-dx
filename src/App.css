@@ -1,42 +1,75 @@
+/* 全体のスタイル調整 */
 #root {
-  max-width: 1280px;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  text-align: left;
+  min-height: 100vh;
+}
+
+/* 日本語フォントの適用 */
+body {
+  font-family: 'Noto Sans JP', sans-serif;
+  color: #333;
+  background-color: #f7f9fc;
+  line-height: 1.6;
+}
+
+/* 共通コンポーネントスタイル */
+.container {
+  width: 100%;
+  max-width: 1200px;
   margin: 0 auto;
-  padding: 2rem;
-  text-align: center;
+  padding: 0 1rem;
 }
 
-.logo {
-  height: 6em;
-  padding: 1.5em;
-  will-change: filter;
-  transition: filter 300ms;
+/* フォーカス状態のスタイル統一
+*:focus {
+  outline: none;
 }
-.logo:hover {
-  filter: drop-shadow(0 0 2em #646cffaa);
-}
-.logo.react:hover {
-  filter: drop-shadow(0 0 2em #61dafbaa);
+*/
+
+/* プレースホルダーのスタイル */
+::placeholder {
+  color: #a0aec0;
+  opacity: 1;
 }
 
-@keyframes logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+/* アニメーション */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  a:nth-of-type(2) .logo {
-    animation: logo-spin infinite 20s linear;
-  }
+@keyframes slideUp {
+  from { transform: translateY(20px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
 }
 
-.card {
-  padding: 2em;
+.fade-in {
+  animation: fadeIn 0.5s ease-in-out;
 }
 
-.read-the-docs {
-  color: #888;
+.slide-up {
+  animation: slideUp 0.5s ease-out;
+}
+
+/* スクロールバーのスタイル */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #c5c5c5;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #a0a0a0;
 }

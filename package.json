@@ -12,7 +12,6 @@
   "dependencies": {
     "@headlessui/react": "^2.2.3",
     "@supabase/supabase-js": "^2.49.4",
-    "@tailwindcss/postcss": "^4.1.6",
     "autoprefixer": "^10.4.17",
     "postcss": "^8.4.35",
     "postcss-nested": "^7.0.2",

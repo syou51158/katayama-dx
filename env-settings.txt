@@ -1,0 +1,6 @@
+# このファイルの内容を.envまたは.env.localファイルにコピーしてください
+# エンコーディングはUTF-8（BOMなし）で保存することを推奨します
+
+VITE_SUPABASE_URL=https://iygiuutslpnvrheqbqgv.supabase.co
+VITE_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Iml5Z2l1dXRzbHBudnJoZXFicWd2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcyNjkzNzksImV4cCI6MjA2Mjg0NTM3OX0.skNBoqKqMl69jLLCyGvfS6CUY7TiCftaUOuLlrdUl10
+VITE_APP_URL=http://localhost:5176 
