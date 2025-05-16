@@ -287,6 +287,16 @@ export const constructionReportsApi = {
         console.error(`Error fetching workers for report ${id}:`, workersError);
       }
 
+      // 拡張写真情報の取得
+      const { data: photos, error: photosError } = await supabase
+        .from('report_photos')
+        .select('*')
+        .eq('report_id', id);
+
+      if (photosError) {
+        console.error(`Error fetching photos for report ${id}:`, photosError);
+      }
+
       // ユーザー名をフォーマット
       const firstName = data.users?.first_name || '';
       const lastName = data.users?.last_name || '';
@@ -298,7 +308,8 @@ export const constructionReportsApi = {
         user_name: userName,
         materials: materials || [],
         equipment: equipment || [],
-        workers: workers || []
+        workers: workers || [],
+        photos: photos || [] // 拡張写真情報を追加
       };
     } catch (error) {
       console.error(`Error in getReportById for ${id}:`, error);

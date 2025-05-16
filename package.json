@@ -15,6 +15,7 @@
     "@headlessui/react": "^2.2.3",
     "@supabase/supabase-js": "^2.38.4",
     "autoprefixer": "^10.4.17",
+    "date-fns": "^4.1.0",
     "postcss": "^8.4.35",
     "postcss-nested": "^7.0.2",
     "react": "^19.1.0",
