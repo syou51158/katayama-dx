@@ -9,21 +9,26 @@ function getRedirectUrl(path: string): string {
   console.log('Current hostname:', hostname);
   
   let redirectUrl;
+  const isLocalhost = hostname === 'localhost' || hostname === '127.0.0.1';
   
-  // GitHub Pagesの場合（github.ioドメインかどうかで判断）
-  if (hostname.includes('github.io')) {
-    // GitHub Pages環境ではフルパスとハッシュルーターを使用
+  if (isLocalhost) {
+    // ローカル環境向け - 開発サーバーのデフォルトポートを含む
+    redirectUrl = `${origin}/#${path}`;
+    console.log('ローカル環境用リダイレクトURL:', redirectUrl);
+  } else if (hostname.includes('github.io')) {
+    // GitHub Pages環境向け
     const basePath = window.location.pathname.endsWith('/') 
       ? window.location.pathname 
       : window.location.pathname + '/';
     redirectUrl = `${origin}${basePath}#${path}`;
+    console.log('GitHub Pages環境用リダイレクトURL:', redirectUrl);
   } else {
-    // ローカル環境では単純なパス結合
-    // ハッシュルーターなので#を含める
-    redirectUrl = `${origin}/#${path}`;
+    // その他の環境向け - 汎用的な対応
+    redirectUrl = `${origin}${window.location.pathname}#${path}`;
+    console.log('その他の環境用リダイレクトURL:', redirectUrl);
   }
   
-  console.log('Generated redirect URL:', redirectUrl);
+  console.log('最終的に生成されたリダイレクトURL:', redirectUrl);
   return redirectUrl;
 }
 
@@ -31,6 +36,7 @@ function getRedirectUrl(path: string): string {
 export async function signInWithEmail(email: string) {
   // 環境に応じたリダイレクトURLを生成
   const redirectUrl = getRedirectUrl('/dashboard');
+  console.log('サインイン用リダイレクトURL:', redirectUrl);
   
   const { data, error } = await supabase.auth.signInWithOtp({
     email,
