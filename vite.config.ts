@@ -13,7 +13,9 @@ export default defineConfig(({ mode }) => {
   
   // GitHub Pagesのリポジトリ名を取得（環境変数から、または空文字列をデフォルトとする）
   const repoName = env.VITE_REPO_NAME || 'katayama-dx';
-  const base = mode === 'production' ? `/${repoName}/` : '/';
+  
+  // 本番環境では常にベースパスを設定（modeに関わらず）
+  const base = `/${repoName}/`;
   
   return {
     plugins: [react()],
