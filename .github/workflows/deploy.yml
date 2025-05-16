@@ -36,6 +36,18 @@ jobs:
           ls -la
       - name: Build
         run: npm run build
+      - name: Prepare for GitHub Pages
+        run: |
+          # 404.htmlがビルド出力に含まれていることを確認
+          if [ ! -f dist/404.html ]; then
+            cp public/404.html dist/
+          fi
+          
+          # GitHub Pagesで正しいMIMEタイプを設定するための.nojekyllファイルを作成
+          touch dist/.nojekyll
+          
+          # アセットが正しいMIMEタイプで提供されるようにするための対応
+          echo "/* application/javascript" > dist/_headers
       - name: Debug build output
         run: |
           echo "ビルド出力情報:"
