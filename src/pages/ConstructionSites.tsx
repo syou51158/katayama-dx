@@ -1,8 +1,7 @@
 import { useState, useEffect } from 'react';
-import { constructionSitesApi } from '../lib/constructionApi';
+import { constructionSitesApi, customersApi } from '../lib/constructionApi';
 import { useAuth } from '../contexts/AuthContext';
 import type { ConstructionSite, ConstructionSiteStatus } from '../types/constructionTypes';
-import { customersApi } from '../lib/constructionApi';
 
 // 工事現場登録/編集モーダル
 const SiteFormModal = ({
@@ -17,45 +16,47 @@ const SiteFormModal = ({
   onSave: (site: any) => Promise<void>;
 }) => {
   const { user } = useAuth();
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<any>({
     name: '',
     address: '',
     client_id: '',
-    start_date: '',
+    start_date: new Date().toISOString().split('T')[0],
     expected_end_date: '',
     status: 'planning' as ConstructionSiteStatus,
     manager_id: '',
     description: ''
   });
-  const [customers, setCustomers] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [customers, setCustomers] = useState<any[]>([]);
 
+  // 顧客一覧の取得
+  useEffect(() => {
+    const fetchCustomers = async () => {
+      try {
+        const customers = await customersApi.getAllCustomers();
+        setCustomers(customers);
+      } catch (err) {
+        console.error('顧客データの取得に失敗しました', err);
+      }
+    };
+
+    fetchCustomers();
+  }, []);
+
+  // モーダルが開かれたときに既存データを設定
   useEffect(() => {
     if (isOpen) {
-      // 顧客データの取得
-      const fetchCustomers = async () => {
-        try {
-          const data = await customersApi.getAllCustomers();
-          setCustomers(data);
-        } catch (err) {
-          console.error('顧客データの取得に失敗しました', err);
-          setError('顧客データの取得に失敗しました');
-        }
-      };
-
-      fetchCustomers();
-
-      // 編集モードの場合、既存データをフォームに設定
       if (site) {
+        // 編集モードの場合、既存のデータをフォームに設定
         setFormData({
-          name: site.name || '',
-          address: site.address || '',
+          name: site.name,
+          address: site.address,
           client_id: site.client_id || '',
-          start_date: site.start_date ? site.start_date.split('T')[0] : '',
-          expected_end_date: site.expected_end_date ? site.expected_end_date.split('T')[0] : '',
-          status: site.status || 'planning',
-          manager_id: site.manager_id || user?.id || '',
+          start_date: site.start_date,
+          expected_end_date: site.expected_end_date || '',
+          status: site.status,
+          manager_id: site.manager_id || '',
           description: site.description || ''
         });
       } else {
@@ -66,7 +67,7 @@ const SiteFormModal = ({
           client_id: '',
           start_date: new Date().toISOString().split('T')[0],
           expected_end_date: '',
-          status: 'planning',
+          status: 'planning' as ConstructionSiteStatus,
           manager_id: user?.id || '',
           description: ''
         });

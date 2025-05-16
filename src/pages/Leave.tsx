@@ -15,7 +15,7 @@ interface LeaveRequest {
 }
 
 export default function Leave() {
-  const { user, profile } = useAuth();
+  const { user } = useAuth();
   
   const [startDate, setStartDate] = useState<string>('');
   const [endDate, setEndDate] = useState<string>('');

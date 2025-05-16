@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
-import { createClient } from '@supabase/supabase-js';
 
 const SupabaseConnectionTest = () => {
   const [testResult, setTestResult] = useState<'loading' | 'success' | 'error'>('loading');

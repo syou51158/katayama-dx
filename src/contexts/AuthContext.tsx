@@ -44,7 +44,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             console.error('Error fetching user profile:', error);
             
             // プロファイル取得失敗時、usersテーブルにレコードが存在するか確認
-            const { data: userExists, error: checkError } = await supabase
+            const { error: checkError } = await supabase
               .from('users')
               .select('id')
               .eq('id', currentUser.id)

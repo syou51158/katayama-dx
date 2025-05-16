@@ -407,7 +407,7 @@ export const constructionReportsApi = {
       updated_at: new Date().toISOString()
     };
 
-    const { data, error } = await supabase
+    const { error } = await supabase
       .from('construction_reports')
       .update(updates)
       .eq('id', id)

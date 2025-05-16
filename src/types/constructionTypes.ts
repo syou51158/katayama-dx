@@ -1,11 +1,5 @@
-// 工事現場の状態を表す列挙型
-export enum ConstructionSiteStatus {
-  PLANNING = 'planning',
-  IN_PROGRESS = 'in_progress',
-  COMPLETED = 'completed',
-  ON_HOLD = 'on_hold',
-  CANCELLED = 'cancelled'
-}
+// 工事現場の状態を表す型
+export type ConstructionSiteStatus = 'planning' | 'in_progress' | 'completed' | 'on_hold' | 'cancelled';
 
 // 工事現場の型定義
 export interface ConstructionSite {
