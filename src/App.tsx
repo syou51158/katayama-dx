@@ -19,6 +19,7 @@ const EnvCheck = lazy(() => import('./envcheck'))
 const ReportNew = lazy(() => import('./pages/ReportNew'))
 const Reports = lazy(() => import('./pages/Reports'))
 const ReportMonthly = lazy(() => import('./pages/ReportMonthly'))
+const ReportDetail = lazy(() => import('./pages/ReportDetail'))
 const ConstructionSites = lazy(() => import('./pages/ConstructionSites'))
 
 // 仮のページコンポーネント（未実装ページ用）
@@ -89,6 +90,7 @@ function App() {
                 <Route path="new" element={<ReportNew />} />
                 <Route index element={<Reports />} />
                 <Route path="monthly" element={<ReportMonthly />} />
+                <Route path=":id" element={<ReportDetail />} />
               </Route>
               <Route path="sites" element={<ConstructionSites />} />
               <Route path="admin">
