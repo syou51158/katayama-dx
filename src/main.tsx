@@ -5,6 +5,28 @@ import './index.css'
 import { AuthProvider } from './contexts/AuthContext'
 import { supabase } from './lib/supabase'
 
+// 環境に応じたダッシュボードURLを生成
+function getDashboardUrl() {
+  const hostname = window.location.hostname;
+  const origin = window.location.origin;
+  const isLocalhost = hostname === 'localhost' || hostname === '127.0.0.1';
+  const isGitHubPages = hostname.includes('github.io');
+  
+  let baseUrl;
+  if (isLocalhost) {
+    baseUrl = `${origin}/`;
+  } else if (isGitHubPages) {
+    const basePath = window.location.pathname.endsWith('/') 
+      ? window.location.pathname 
+      : window.location.pathname + '/';
+    baseUrl = `${origin}${basePath}`;
+  } else {
+    baseUrl = `${origin}${window.location.pathname}`;
+  }
+  
+  return `${baseUrl}#/dashboard`;
+}
+
 // 認証リダイレクト検出とハンドリング（マジックリンクからの戻り）
 async function handleAuthRedirect() {
   // URLのハッシュ部分にアクセストークンが含まれているか確認
@@ -15,24 +37,25 @@ async function handleAuthRedirect() {
     console.log('認証パラメータを検出:', location.hash);
     
     try {
-      // セッションを処理
-      const { error } = await supabase.auth.getSession();
+      // セッションを明示的に取得
+      const { data, error } = await supabase.auth.getSession();
       if (error) {
         console.error('セッション取得エラー:', error);
         return;
       }
       
-      // 現在のユーザーを取得
-      const { data } = await supabase.auth.getUser();
-      if (data?.user) {
-        console.log('ユーザー認証成功:', data.user.email);
+      if (data.session) {
+        console.log('有効なセッションを検出:', data.session.user.email);
         
-        // ダッシュボードへリダイレクト
-        // 少し遅延させて確実にセッションが保存されるようにする
-        setTimeout(() => {
-          console.log('ダッシュボードへリダイレクト');
-          window.location.href = '/#/dashboard';
-        }, 500);
+        // ダッシュボードへのURL
+        const dashboardUrl = getDashboardUrl();
+        console.log('リダイレクト先URL:', dashboardUrl);
+        
+        // ダッシュボードへリダイレクト（遅延なし）
+        console.log('即時ダッシュボードへリダイレクト');
+        window.location.href = dashboardUrl;
+      } else {
+        console.log('セッションが見つかりませんでした');
       }
     } catch (err) {
       console.error('認証パラメータ処理エラー:', err);

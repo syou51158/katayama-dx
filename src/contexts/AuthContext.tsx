@@ -17,6 +17,37 @@ interface AuthContextProps {
 
 const AuthContext = createContext<AuthContextProps | undefined>(undefined);
 
+// 認証状態が変わったときのリダイレクト処理
+function handleAuthChange(event: string, session: any) {
+  console.log('AuthContext: Auth state changed:', event);
+  
+  // URLチェック - 認証パラメータがあるか確認
+  const hasAuthParams = window.location.hash.includes('access_token=') || 
+                       window.location.hash.includes('type=magiclink');
+                       
+  if (hasAuthParams && event === 'SIGNED_IN' && session) {
+    console.log('マジックリンク認証成功後のリダイレクト処理');
+    
+    // ダッシュボードに移動
+    const origin = window.location.origin;
+    const pathname = window.location.pathname;
+    const hostname = window.location.hostname;
+    const isLocalhost = hostname === 'localhost' || hostname === '127.0.0.1';
+    const isGitHubPages = hostname.includes('github.io');
+    
+    let baseUrl;
+    if (isLocalhost) {
+      baseUrl = origin + '/';
+    } else if (isGitHubPages) {
+      baseUrl = origin + (pathname.endsWith('/') ? pathname : pathname + '/');
+    } else {
+      baseUrl = origin + pathname;
+    }
+    
+    window.location.href = baseUrl + '#/dashboard';
+  }
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
@@ -89,10 +120,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     loadUserData();
 
-    // 認証状態の変化を監視（カスタムフックション経由）
+    // 認証状態の変化を監視
     const { data: authListener } = subscribeToAuthChanges(
       async (event, session) => {
         console.log('Auth state changed in context:', event);
+        
+        // 認証状態変更を処理
+        handleAuthChange(event, session);
         
         if (event === 'SIGNED_IN') {
           console.log('Sign in detected, user signed in');
