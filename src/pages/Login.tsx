@@ -72,11 +72,7 @@ export default function Login() {
           <div className="text-center">
             <div className="bg-green-50 border-l-4 border-green-600 text-green-800 p-4 mb-6 rounded-r shadow-sm" role="alert">
               <p className="font-bold mb-1">メールを送信しました</p>
-              <p className="mb-3">ログインリンクを記載したメールを送信しました。<br />メール内のリンクをクリックしてログインしてください。</p>
-              <div className="text-sm text-gray-700 bg-gray-100 p-3 rounded">
-                <p className="font-bold">【重要】リンククリック後の注意</p>
-                <p>メール内のリンクをクリックすると自動的にダッシュボードに移動します。<br />もし移動しない場合は、画面を更新してください。</p>
-              </div>
+              <p>ログインリンクを記載したメールを送信しました。<br />メールをご確認ください。</p>
             </div>
             <button
               onClick={() => setIsLinkSent(false)}

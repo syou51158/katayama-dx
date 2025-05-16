@@ -1,20 +1,22 @@
 import { supabase } from './supabase';
 
-// リダイレクトURL取得関数（最もシンプルで確実な方法）
+// リダイレクトURL取得関数（環境に応じて適切なURLを返す）
 function getRedirectUrl(path: string): string {
-  // 常に絶対パスでURLを構築（ローカル環境でも動作する最も確実な方法）
+  // 現在のオリジンを取得
   const origin = window.location.origin;
-  const redirectUrl = `${origin}/#${path}`;
+  console.log('Current origin:', origin);
   
-  console.log('認証用リダイレクトURL生成:', redirectUrl);
+  // 開発環境ではポート番号が変わることがあるので、URLをログ出力
+  const redirectUrl = `${origin}${path}`;
+  console.log('Generated redirect URL:', redirectUrl);
+  
   return redirectUrl;
 }
 
 // メールリンクでのサインイン
 export async function signInWithEmail(email: string) {
-  // 最もシンプルなリダイレクトURLを生成
+  // 環境に応じたリダイレクトURLを生成
   const redirectUrl = getRedirectUrl('/dashboard');
-  console.log('サインイン用リダイレクトURL:', redirectUrl);
   
   const { data, error } = await supabase.auth.signInWithOtp({
     email,

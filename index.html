@@ -13,14 +13,12 @@
     
     <!-- GitHub Pages用リダイレクト処理 -->
     <script type="text/javascript">
-      // 404.htmlからリダイレクトされた場合の処理
+      // URLから?/パスが含まれる場合、正しいURLに書き換え
       (function() {
-        var loc = window.location;
-        var redirect = loc.search.substring(1).split('&')[0].split('=')[1];
-        if (redirect) {
-          // URLクエリパラメータから元のパスを取得し、履歴を書き換える
-          var cleanRedirect = redirect.replace(/~and~/g, '&');
-          history.replaceState(null, null, cleanRedirect);
+        var redirect = sessionStorage.redirect;
+        delete sessionStorage.redirect;
+        if (redirect && redirect != location.href) {
+          history.replaceState(null, null, redirect);
         }
       })();
     </script>

@@ -10,13 +10,6 @@ console.log('Supabase URL:', supabaseUrl);
 console.log('Supabase Key:', supabaseAnonKey ? supabaseAnonKey.substring(0, 10) + '...' : 'not available');
 console.log('Supabase Key is valid:', supabaseAnonKey?.includes('.') || false);
 
-// ダッシュボードへリダイレクトする関数
-function redirectToDashboard() {
-  const origin = window.location.origin;
-  console.log('ダッシュボードへリダイレクト処理実行');
-  window.location.href = `${origin}/#/dashboard`;
-}
-
 // クライアント作成を試みる
 let supabaseClient;
 try {
@@ -27,30 +20,11 @@ try {
       auth: {
         persistSession: true,
         autoRefreshToken: true,
-        detectSessionInUrl: true,
-        flowType: 'pkce',
-        storage: localStorage,
-        debug: true
+        detectSessionInUrl: true
       }
     }
   );
   console.log('Supabaseクライアント作成成功');
-  
-  // 認証状態の変更を監視
-  supabaseClient.auth.onAuthStateChange((event, session) => {
-    console.log(`Auth event detected: ${event}`, session ? 'セッションあり' : 'セッションなし');
-    
-    if (event === 'SIGNED_IN' && session) {
-      console.log('サインイン検出:', session.user?.email);
-      
-      // セッションが検出されたらダッシュボードにリダイレクト
-      // main.tsxにも同様の処理があるが、どちらかが動作するように冗長化
-      setTimeout(() => {
-        redirectToDashboard();
-      }, 500);
-    }
-  });
-  
 } catch (error) {
   console.error('Supabaseクライアント作成エラー:', error);
   throw error;
