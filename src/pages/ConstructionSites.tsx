@@ -77,7 +77,7 @@ const SiteFormModal = ({
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    setFormData((prev: Record<string, any>) => ({ ...prev, [name]: value }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -263,7 +263,6 @@ const StatusBadge = ({ status }: { status: ConstructionSiteStatus }) => {
 
 // メイン画面コンポーネント
 const ConstructionSites = () => {
-  const { user } = useAuth();
   const [sites, setSites] = useState<ConstructionSite[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
