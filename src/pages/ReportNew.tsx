@@ -381,68 +381,6 @@ const SafetyCheckSection = ({
   );
 };
 
-// 基本の画像アップロードコンポーネント（互換性用）
-const ImageUploadSection = ({
-  images,
-  onImagesChange
-}: {
-  images: File[];
-  onImagesChange: (images: File[]) => void;
-}) => {
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files) {
-      onImagesChange([...images, ...Array.from(e.target.files)]);
-    }
-  };
-
-  const handleRemoveImage = (index: number) => {
-    const newImages = [...images];
-    newImages.splice(index, 1);
-    onImagesChange(newImages);
-  };
-
-  return (
-    <div className="mb-6">
-      <h3 className="text-lg font-medium mb-3">現場写真 (旧)</h3>
-      <div className="mb-4">
-        <input
-          type="file"
-          multiple
-          accept="image/*"
-          onChange={handleImageChange}
-          className="block w-full text-sm text-gray-500
-            file:mr-4 file:py-2 file:px-4
-            file:rounded file:border-0
-            file:text-sm file:font-medium
-            file:bg-blue-50 file:text-blue-700
-            hover:file:bg-blue-100"
-        />
-      </div>
-
-      {images.length > 0 && (
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
-          {images.map((image, index) => (
-            <div key={index} className="relative">
-              <img
-                src={URL.createObjectURL(image)}
-                alt={`アップロード写真 ${index + 1}`}
-                className="w-full h-24 object-cover rounded border border-gray-300"
-              />
-              <button
-                type="button"
-                onClick={() => handleRemoveImage(index)}
-                className="absolute top-0 right-0 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center"
-              >
-                ×
-              </button>
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-};
-
 // メインの日報入力コンポーネント
 const ReportNew = () => {
   const navigate = useNavigate();
