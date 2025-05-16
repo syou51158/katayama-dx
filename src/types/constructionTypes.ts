@@ -1,6 +1,12 @@
 // 工事現場の状態を表す型
 export type ConstructionSiteStatus = 'planning' | 'in_progress' | 'completed' | 'on_hold' | 'cancelled';
 
+// 天候タイプの定義
+export type WeatherType = 'sunny' | 'cloudy' | 'rainy' | 'snowy' | 'foggy' | 'windy' | 'stormy' | 'other';
+
+// 写真カテゴリの定義
+export type PhotoCategory = 'before' | 'after' | 'progress' | 'issue' | 'safety' | 'material' | 'equipment' | 'other';
+
 // 工事現場の型定義
 export interface ConstructionSite {
   id: string;
@@ -19,6 +25,17 @@ export interface ConstructionSite {
   updated_at?: string;
 }
 
+// 写真の型定義
+export interface ReportPhoto {
+  id?: string;
+  report_id?: string;
+  url: string;
+  caption?: string;
+  category: PhotoCategory;
+  taken_at?: string;
+  created_at?: string;
+}
+
 // 日報の型定義
 export interface ConstructionReport {
   id: string;
@@ -27,17 +44,24 @@ export interface ConstructionReport {
   user_id: string;
   user_name?: string; // 報告者名（UI表示用）
   report_date: string;
+  weather_type?: WeatherType;
   weather?: string;
   temperature?: number;
+  humidity?: number;
+  wind_speed?: number;
+  wind_direction?: string;
   work_start_time?: string;
   work_end_time?: string;
   manpower?: number;
   progress_percentage?: number;
+  previous_progress_percentage?: number; // 前回の進捗率（計算用）
   work_description: string;
   issues?: string;
+  issue_status?: 'none' | 'pending' | 'resolved';
   next_day_plan?: string;
   safety_checks?: SafetyChecks;
   images?: string[];
+  photos?: ReportPhoto[]; // 拡張された写真情報
   created_at: string;
   updated_at?: string;
   
@@ -114,18 +138,29 @@ export interface MonthlySummary {
 export interface ConstructionReportFormData {
   site_id: string;
   report_date: string;
+  weather_type: WeatherType;
   weather: string;
   temperature: string | number;
+  humidity: string | number;
+  wind_speed: string | number;
+  wind_direction: string;
   work_start_time: string;
   work_end_time: string;
   manpower: string | number;
   progress_percentage: string | number;
   work_description: string;
   issues: string;
+  issue_status: 'none' | 'pending' | 'resolved';
   next_day_plan: string;
   safety_checks: SafetyChecks;
   images: File[];
   existingImages: string[];
+  photos: {
+    file?: File;
+    url?: string;
+    caption: string;
+    category: PhotoCategory;
+  }[];
   materials: MaterialUsage[];
   equipment: EquipmentUsage[];
   workers: WorkerAttendance[];
@@ -137,4 +172,8 @@ export interface ReportFilter {
   start_date?: string;
   end_date?: string;
   user_id?: string;
+  weather_type?: WeatherType;
+  issue_status?: 'none' | 'pending' | 'resolved';
+  progress_min?: number;
+  progress_max?: number;
 } 

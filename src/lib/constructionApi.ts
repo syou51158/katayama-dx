@@ -306,92 +306,130 @@ export const constructionReportsApi = {
     }
   },
 
-  // 日報の作成（関連データを含む）
+  // 日報の新規作成
   async createReport(
     report: Omit<ConstructionReport, 'id' | 'created_at' | 'updated_at'>,
     materials?: Omit<MaterialUsage, 'id' | 'report_id' | 'created_at'>[],
     equipment?: Omit<EquipmentUsage, 'id' | 'report_id' | 'created_at'>[],
     workers?: Omit<WorkerAttendance, 'id' | 'report_id' | 'created_at'>[]
   ): Promise<ConstructionReport> {
-    // トランザクション的に処理するため、独自の実装
-    const { data, error } = await supabase
-      .from('construction_reports')
-      .insert([
-        {
-          site_id: report.site_id,
-          user_id: report.user_id,
-          report_date: report.report_date,
-          weather: report.weather,
-          temperature: report.temperature,
-          work_start_time: report.work_start_time,
-          work_end_time: report.work_end_time,
-          manpower: report.manpower,
-          progress_percentage: report.progress_percentage,
-          work_description: report.work_description,
-          issues: report.issues,
-          next_day_plan: report.next_day_plan,
-          safety_checks: report.safety_checks,
-          images: report.images
+    try {
+      console.log('Creating new construction report');
+      
+      // 日報の登録
+      const { data: reportData, error: reportError } = await supabase
+        .from('construction_reports')
+        .insert([
+          {
+            site_id: report.site_id,
+            user_id: report.user_id,
+            report_date: report.report_date,
+            weather_type: report.weather_type, // 新しいフィールド
+            weather: report.weather,
+            temperature: report.temperature,
+            humidity: report.humidity, // 新しいフィールド
+            wind_speed: report.wind_speed, // 新しいフィールド
+            wind_direction: report.wind_direction, // 新しいフィールド
+            work_start_time: report.work_start_time,
+            work_end_time: report.work_end_time,
+            manpower: report.manpower,
+            progress_percentage: report.progress_percentage,
+            previous_progress_percentage: report.previous_progress_percentage, // 新しいフィールド
+            work_description: report.work_description,
+            issues: report.issues,
+            issue_status: report.issue_status, // 新しいフィールド
+            next_day_plan: report.next_day_plan,
+            safety_checks: report.safety_checks,
+            images: report.images || []
+          }
+        ])
+        .select()
+        .single();
+
+      if (reportError) {
+        console.error('Error creating report:', reportError);
+        throw reportError;
+      }
+
+      console.log('Report created successfully:', reportData.id);
+      const reportId = reportData.id;
+
+      // 拡張写真情報の登録（存在する場合）
+      if (report.photos && report.photos.length > 0) {
+        const photoRecords = report.photos.map(photo => ({
+          report_id: reportId,
+          url: photo.url,
+          caption: photo.caption || '',
+          category: photo.category,
+          taken_at: photo.taken_at || new Date().toISOString()
+        }));
+
+        const { error: photosError } = await supabase
+          .from('report_photos')
+          .insert(photoRecords);
+
+        if (photosError) {
+          console.error('Error saving report photos:', photosError);
+          // 写真の登録に失敗しても、日報自体は登録済みなので処理は継続
         }
-      ])
-      .select()
-      .single();
+      }
 
-    if (error) throw error;
+      // 資材使用記録の登録（存在する場合）
+      if (materials && materials.length > 0) {
+        const materialRecords = materials.map(material => ({
+          ...material,
+          report_id: reportId
+        }));
 
-    // 資材使用記録の保存
-    if (materials && materials.length > 0) {
-      const materialData = materials.map(material => ({
-        report_id: data.id,
-        material_name: material.material_name,
-        quantity: material.quantity,
-        unit: material.unit,
-        notes: material.notes
-      }));
+        const { error: materialsError } = await supabase
+          .from('material_usages')
+          .insert(materialRecords);
 
-      const { error: materialError } = await supabase
-        .from('material_usages')
-        .insert(materialData);
+        if (materialsError) {
+          console.error('Error saving material usages:', materialsError);
+          // 資材記録の登録に失敗しても、日報自体は登録済みなので処理は継続
+        }
+      }
 
-      if (materialError) throw materialError;
+      // 機材使用記録の登録（存在する場合）
+      if (equipment && equipment.length > 0) {
+        const equipmentRecords = equipment.map(item => ({
+          ...item,
+          report_id: reportId
+        }));
+
+        const { error: equipmentError } = await supabase
+          .from('equipment_usages')
+          .insert(equipmentRecords);
+
+        if (equipmentError) {
+          console.error('Error saving equipment usages:', equipmentError);
+          // 機材記録の登録に失敗しても、日報自体は登録済みなので処理は継続
+        }
+      }
+
+      // 作業員記録の登録（存在する場合）
+      if (workers && workers.length > 0) {
+        const workerRecords = workers.map(worker => ({
+          ...worker,
+          report_id: reportId
+        }));
+
+        const { error: workersError } = await supabase
+          .from('worker_attendances')
+          .insert(workerRecords);
+
+        if (workersError) {
+          console.error('Error saving worker attendances:', workersError);
+          // 作業員記録の登録に失敗しても、日報自体は登録済みなので処理は継続
+        }
+      }
+
+      return reportData;
+    } catch (error) {
+      console.error('Error in createReport:', error);
+      throw error;
     }
-
-    // 機材使用記録の保存
-    if (equipment && equipment.length > 0) {
-      const equipmentData = equipment.map(item => ({
-        report_id: data.id,
-        equipment_name: item.equipment_name,
-        usage_hours: item.usage_hours,
-        operator: item.operator,
-        notes: item.notes
-      }));
-
-      const { error: equipmentError } = await supabase
-        .from('equipment_usages')
-        .insert(equipmentData);
-
-      if (equipmentError) throw equipmentError;
-    }
-
-    // 作業員記録の保存
-    if (workers && workers.length > 0) {
-      const workerData = workers.map(worker => ({
-        report_id: data.id,
-        worker_name: worker.worker_name,
-        role: worker.role,
-        hours_worked: worker.hours_worked,
-        notes: worker.notes
-      }));
-
-      const { error: workerError } = await supabase
-        .from('worker_attendances')
-        .insert(workerData);
-
-      if (workerError) throw workerError;
-    }
-
-    // 最終的なレポートを返す
-    return await this.getReportById(data.id);
   },
 
   // 日報の更新
@@ -402,96 +440,160 @@ export const constructionReportsApi = {
     equipment?: EquipmentUsage[],
     workers?: WorkerAttendance[]
   ): Promise<ConstructionReport> {
-    const updates = {
-      ...report,
-      updated_at: new Date().toISOString()
-    };
+    try {
+      // 日報の更新
+      const reportUpdates = {
+        ...report,
+        updated_at: new Date().toISOString()
+      };
 
-    const { error } = await supabase
-      .from('construction_reports')
-      .update(updates)
-      .eq('id', id)
-      .select()
-      .single();
+      const { data: reportData, error: reportError } = await supabase
+        .from('construction_reports')
+        .update(reportUpdates)
+        .eq('id', id)
+        .select()
+        .single();
 
-    if (error) throw error;
+      if (reportError) {
+        console.error(`Error updating report ${id}:`, reportError);
+        throw reportError;
+      }
 
-    // 資材使用記録の更新（削除して再作成）
-    if (materials !== undefined) {
-      // 既存の記録を削除
-      await supabase
-        .from('material_usages')
-        .delete()
-        .eq('report_id', id);
+      // 拡張写真情報の更新（存在する場合）
+      if (report.photos) {
+        // 1. 既存の写真を削除
+        const { error: deletePhotosError } = await supabase
+          .from('report_photos')
+          .delete()
+          .eq('report_id', id);
 
-      // 新しい記録を作成
-      if (materials.length > 0) {
-        const materialData = materials.map(material => ({
-          report_id: id,
-          material_name: material.material_name,
-          quantity: material.quantity,
-          unit: material.unit,
-          notes: material.notes
-        }));
+        if (deletePhotosError) {
+          console.error(`Error deleting existing photos for report ${id}:`, deletePhotosError);
+          // 失敗しても処理は継続
+        }
 
-        const { error: materialError } = await supabase
+        // 2. 新しい写真を登録
+        if (report.photos.length > 0) {
+          const photoRecords = report.photos.map(photo => ({
+            report_id: id,
+            url: photo.url,
+            caption: photo.caption || '',
+            category: photo.category,
+            taken_at: photo.taken_at || new Date().toISOString()
+          }));
+
+          const { error: photosError } = await supabase
+            .from('report_photos')
+            .insert(photoRecords);
+
+          if (photosError) {
+            console.error(`Error saving report photos for report ${id}:`, photosError);
+            // 失敗しても処理は継続
+          }
+        }
+      }
+
+      // 資材使用記録の更新
+      if (materials) {
+        // 既存の記録を削除
+        const { error: deleteMaterialsError } = await supabase
           .from('material_usages')
-          .insert(materialData);
+          .delete()
+          .eq('report_id', id);
 
-        if (materialError) throw materialError;
+        if (deleteMaterialsError) {
+          console.error(`Error deleting material usages for report ${id}:`, deleteMaterialsError);
+          // 失敗しても処理は継続
+        }
+
+        // 新しい記録を登録
+        if (materials.length > 0) {
+          const materialRecords = materials.map(material => ({
+            ...material,
+            id: undefined, // IDは自動生成
+            report_id: id
+          }));
+
+          const { error: materialsError } = await supabase
+            .from('material_usages')
+            .insert(materialRecords);
+
+          if (materialsError) {
+            console.error(`Error saving material usages for report ${id}:`, materialsError);
+            // 失敗しても処理は継続
+          }
+        }
       }
-    }
 
-    // 機材使用記録の更新
-    if (equipment !== undefined) {
-      await supabase
-        .from('equipment_usages')
-        .delete()
-        .eq('report_id', id);
-
-      if (equipment.length > 0) {
-        const equipmentData = equipment.map(item => ({
-          report_id: id,
-          equipment_name: item.equipment_name,
-          usage_hours: item.usage_hours,
-          operator: item.operator,
-          notes: item.notes
-        }));
-
-        const { error: equipmentError } = await supabase
+      // 機材使用記録の更新
+      if (equipment) {
+        // 既存の記録を削除
+        const { error: deleteEquipmentError } = await supabase
           .from('equipment_usages')
-          .insert(equipmentData);
+          .delete()
+          .eq('report_id', id);
 
-        if (equipmentError) throw equipmentError;
+        if (deleteEquipmentError) {
+          console.error(`Error deleting equipment usages for report ${id}:`, deleteEquipmentError);
+          // 失敗しても処理は継続
+        }
+
+        // 新しい記録を登録
+        if (equipment.length > 0) {
+          const equipmentRecords = equipment.map(item => ({
+            ...item,
+            id: undefined, // IDは自動生成
+            report_id: id
+          }));
+
+          const { error: equipmentError } = await supabase
+            .from('equipment_usages')
+            .insert(equipmentRecords);
+
+          if (equipmentError) {
+            console.error(`Error saving equipment usages for report ${id}:`, equipmentError);
+            // 失敗しても処理は継続
+          }
+        }
       }
-    }
 
-    // 作業員記録の更新
-    if (workers !== undefined) {
-      await supabase
-        .from('worker_attendances')
-        .delete()
-        .eq('report_id', id);
-
-      if (workers.length > 0) {
-        const workerData = workers.map(worker => ({
-          report_id: id,
-          worker_name: worker.worker_name,
-          role: worker.role,
-          hours_worked: worker.hours_worked,
-          notes: worker.notes
-        }));
-
-        const { error: workerError } = await supabase
+      // 作業員記録の更新
+      if (workers) {
+        // 既存の記録を削除
+        const { error: deleteWorkersError } = await supabase
           .from('worker_attendances')
-          .insert(workerData);
+          .delete()
+          .eq('report_id', id);
 
-        if (workerError) throw workerError;
+        if (deleteWorkersError) {
+          console.error(`Error deleting worker attendances for report ${id}:`, deleteWorkersError);
+          // 失敗しても処理は継続
+        }
+
+        // 新しい記録を登録
+        if (workers.length > 0) {
+          const workerRecords = workers.map(worker => ({
+            ...worker,
+            id: undefined, // IDは自動生成
+            report_id: id
+          }));
+
+          const { error: workersError } = await supabase
+            .from('worker_attendances')
+            .insert(workerRecords);
+
+          if (workersError) {
+            console.error(`Error saving worker attendances for report ${id}:`, workersError);
+            // 失敗しても処理は継続
+          }
+        }
       }
-    }
 
-    // 最終的なレポートを返す
-    return await this.getReportById(id);
+      return reportData;
+    } catch (error) {
+      console.error(`Error in updateReport for ${id}:`, error);
+      throw error;
+    }
   },
 
   // 月次レポートデータの取得

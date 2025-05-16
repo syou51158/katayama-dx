@@ -8,8 +8,14 @@ import type {
   EquipmentUsage,
   WorkerAttendance,
   SafetyChecks,
-  ConstructionReportFormData
+  ConstructionReportFormData,
+  WeatherType,
+  PhotoCategory
 } from '../types/constructionTypes';
+import EnhancedPhotoUpload from '../components/EnhancedPhotoUpload';
+import WeatherInfoInput from '../components/WeatherInfoInput';
+import IssueTracker from '../components/IssueTracker';
+import ProgressVisualizer from '../components/ProgressVisualizer';
 
 // 資材使用記録コンポーネント
 const MaterialsSection = ({
@@ -274,7 +280,7 @@ const WorkersSection = ({
   );
 };
 
-// 安全確認事項コンポーネント
+// 安全チェックセクション
 const SafetyCheckSection = ({
   safetyChecks,
   onChange
@@ -291,17 +297,19 @@ const SafetyCheckSection = ({
 
   return (
     <div className="mb-6">
-      <h3 className="text-lg font-medium mb-3">安全確認事項</h3>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <h3 className="text-lg font-medium mb-3">安全確認</h3>
+      <div className="space-y-3">
         <div className="flex items-center">
           <input
             type="checkbox"
             id="morning_meeting"
             checked={safetyChecks.morning_meeting}
-            onChange={e => handleChange('morning_meeting', e.target.checked)}
-            className="mr-2"
+            onChange={(e) => handleChange('morning_meeting', e.target.checked)}
+            className="h-4 w-4 text-blue-600 border-gray-300 rounded"
           />
-          <label htmlFor="morning_meeting">朝礼の実施</label>
+          <label htmlFor="morning_meeting" className="ml-2 block text-sm text-gray-700">
+            朝礼・KY活動の実施
+          </label>
         </div>
 
         <div className="flex items-center">
@@ -309,10 +317,12 @@ const SafetyCheckSection = ({
             type="checkbox"
             id="safety_equipment"
             checked={safetyChecks.safety_equipment}
-            onChange={e => handleChange('safety_equipment', e.target.checked)}
-            className="mr-2"
+            onChange={(e) => handleChange('safety_equipment', e.target.checked)}
+            className="h-4 w-4 text-blue-600 border-gray-300 rounded"
           />
-          <label htmlFor="safety_equipment">安全装備の確認</label>
+          <label htmlFor="safety_equipment" className="ml-2 block text-sm text-gray-700">
+            安全装備の着用確認
+          </label>
         </div>
 
         <div className="flex items-center">
@@ -320,10 +330,12 @@ const SafetyCheckSection = ({
             type="checkbox"
             id="risk_assessment"
             checked={safetyChecks.risk_assessment}
-            onChange={e => handleChange('risk_assessment', e.target.checked)}
-            className="mr-2"
+            onChange={(e) => handleChange('risk_assessment', e.target.checked)}
+            className="h-4 w-4 text-blue-600 border-gray-300 rounded"
           />
-          <label htmlFor="risk_assessment">危険箇所の確認</label>
+          <label htmlFor="risk_assessment" className="ml-2 block text-sm text-gray-700">
+            危険箇所の確認と対策
+          </label>
         </div>
 
         <div className="flex items-center">
@@ -331,10 +343,12 @@ const SafetyCheckSection = ({
             type="checkbox"
             id="site_clean"
             checked={safetyChecks.site_clean}
-            onChange={e => handleChange('site_clean', e.target.checked)}
-            className="mr-2"
+            onChange={(e) => handleChange('site_clean', e.target.checked)}
+            className="h-4 w-4 text-blue-600 border-gray-300 rounded"
           />
-          <label htmlFor="site_clean">現場の整理整頓</label>
+          <label htmlFor="site_clean" className="ml-2 block text-sm text-gray-700">
+            現場整理整頓の実施
+          </label>
         </div>
 
         <div className="flex items-center">
@@ -342,29 +356,32 @@ const SafetyCheckSection = ({
             type="checkbox"
             id="tools_inspection"
             checked={safetyChecks.tools_inspection}
-            onChange={e => handleChange('tools_inspection', e.target.checked)}
-            className="mr-2"
+            onChange={(e) => handleChange('tools_inspection', e.target.checked)}
+            className="h-4 w-4 text-blue-600 border-gray-300 rounded"
           />
-          <label htmlFor="tools_inspection">工具・機材の点検</label>
+          <label htmlFor="tools_inspection" className="ml-2 block text-sm text-gray-700">
+            工具・機材の点検
+          </label>
         </div>
-      </div>
 
-      <div className="mt-4">
-        <label className="block text-sm font-medium text-gray-700 mb-1">
-          その他の安全に関する注意点・備考
-        </label>
-        <textarea
-          value={safetyChecks.additional_notes || ''}
-          onChange={e => handleChange('additional_notes', e.target.value)}
-          rows={3}
-          className="w-full p-2 border border-gray-300 rounded"
-        />
+        <div>
+          <label htmlFor="additional_notes" className="block text-sm font-medium text-gray-700 mb-1">
+            安全に関する特記事項
+          </label>
+          <textarea
+            id="additional_notes"
+            value={safetyChecks.additional_notes || ''}
+            onChange={(e) => handleChange('additional_notes', e.target.value)}
+            placeholder="安全上の特記事項があれば入力してください"
+            className="w-full p-2 border border-gray-300 rounded h-20"
+          />
+        </div>
       </div>
     </div>
   );
 };
 
-// 画像アップロードコンポーネント
+// 基本の画像アップロードコンポーネント（互換性用）
 const ImageUploadSection = ({
   images,
   onImagesChange
@@ -374,8 +391,7 @@ const ImageUploadSection = ({
 }) => {
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
-      const newImages = Array.from(e.target.files);
-      onImagesChange([...images, ...newImages]);
+      onImagesChange([...images, ...Array.from(e.target.files)]);
     }
   };
 
@@ -387,38 +403,35 @@ const ImageUploadSection = ({
 
   return (
     <div className="mb-6">
-      <h3 className="text-lg font-medium mb-3">現場写真</h3>
+      <h3 className="text-lg font-medium mb-3">現場写真 (旧)</h3>
       <div className="mb-4">
         <input
           type="file"
-          accept="image/*"
           multiple
+          accept="image/*"
           onChange={handleImageChange}
           className="block w-full text-sm text-gray-500
             file:mr-4 file:py-2 file:px-4
             file:rounded file:border-0
-            file:text-sm file:font-semibold
+            file:text-sm file:font-medium
             file:bg-blue-50 file:text-blue-700
             hover:file:bg-blue-100"
         />
-        <p className="text-xs text-gray-500 mt-1">
-          JPG, PNG, GIF形式の画像をアップロードできます（最大5MB）
-        </p>
       </div>
 
       {images.length > 0 && (
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
           {images.map((image, index) => (
             <div key={index} className="relative">
               <img
                 src={URL.createObjectURL(image)}
-                alt={`現場写真 ${index + 1}`}
-                className="w-full h-32 object-cover rounded"
+                alt={`アップロード写真 ${index + 1}`}
+                className="w-full h-24 object-cover rounded border border-gray-300"
               />
               <button
                 type="button"
                 onClick={() => handleRemoveImage(index)}
-                className="absolute top-1 right-1 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center"
+                className="absolute top-0 right-0 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center"
               >
                 ×
               </button>
@@ -430,28 +443,33 @@ const ImageUploadSection = ({
   );
 };
 
-// メインの日報入力ページコンポーネント
+// メインの日報入力コンポーネント
 const ReportNew = () => {
-  const { user } = useAuth();
   const navigate = useNavigate();
-  
+  const { user } = useAuth();
   const [sites, setSites] = useState<ConstructionSite[]>([]);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
-  
-  // フォームデータの状態
+  const [previousProgress, setPreviousProgress] = useState<number | null>(null);
+
+  // フォームデータ
   const [formData, setFormData] = useState<ConstructionReportFormData>({
     site_id: '',
     report_date: new Date().toISOString().split('T')[0],
-    weather: '',
+    weather_type: 'sunny',
+    weather: '晴れ',
     temperature: '',
+    humidity: '',
+    wind_speed: '',
+    wind_direction: '',
     work_start_time: '08:00',
     work_end_time: '17:00',
     manpower: '',
     progress_percentage: '',
     work_description: '',
     issues: '',
+    issue_status: 'none',
     next_day_plan: '',
     safety_checks: {
       morning_meeting: false,
@@ -462,12 +480,13 @@ const ReportNew = () => {
     },
     images: [],
     existingImages: [],
+    photos: [],
     materials: [],
     equipment: [],
     workers: []
   });
 
-  // 現場データの取得
+  // 現場データと前回の進捗率の取得
   useEffect(() => {
     const fetchSites = async () => {
       try {
@@ -480,6 +499,28 @@ const ReportNew = () => {
             ...prev,
             site_id: data[0].id
           }));
+
+          // 前回の日報を取得して進捗率を設定
+          try {
+            const reportsData = await constructionReportsApi.getReports({
+              site_id: data[0].id,
+            });
+            
+            if (reportsData.length > 0) {
+              // 日付で降順ソート
+              const sortedReports = reportsData.sort((a, b) => 
+                new Date(b.report_date).getTime() - new Date(a.report_date).getTime()
+              );
+              
+              // 最新の報告の進捗率を取得
+              const latestProgress = sortedReports[0].progress_percentage;
+              if (latestProgress !== undefined && latestProgress !== null) {
+                setPreviousProgress(latestProgress);
+              }
+            }
+          } catch (err) {
+            console.error('前回の日報データの取得に失敗しました', err);
+          }
         }
       } catch (err) {
         console.error('工事現場データの取得に失敗しました', err);
@@ -492,6 +533,42 @@ const ReportNew = () => {
     fetchSites();
   }, []);
 
+  // 現場変更時に前回の進捗率を取得
+  useEffect(() => {
+    const fetchPreviousProgress = async () => {
+      if (!formData.site_id) return;
+      
+      try {
+        const reportsData = await constructionReportsApi.getReports({
+          site_id: formData.site_id,
+        });
+        
+        if (reportsData.length > 0) {
+          // 日付で降順ソート
+          const sortedReports = reportsData.sort((a, b) => 
+            new Date(b.report_date).getTime() - new Date(a.report_date).getTime()
+          );
+          
+          // 最新の報告の進捗率を取得
+          const latestProgress = sortedReports[0].progress_percentage;
+          if (latestProgress !== undefined && latestProgress !== null) {
+            setPreviousProgress(latestProgress);
+          } else {
+            setPreviousProgress(null);
+          }
+        } else {
+          setPreviousProgress(null);
+        }
+      } catch (err) {
+        console.error('前回の日報データの取得に失敗しました', err);
+        setPreviousProgress(null);
+      }
+    };
+
+    fetchPreviousProgress();
+  }, [formData.site_id]);
+
+  // 入力フィールド変更ハンドラ
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({
@@ -500,6 +577,15 @@ const ReportNew = () => {
     }));
   };
 
+  // 写真データ更新ハンドラ
+  const handlePhotosChange = (photos: { file?: File; url?: string; caption: string; category: PhotoCategory }[]) => {
+    setFormData(prev => ({
+      ...prev,
+      photos
+    }));
+  };
+
+  // フォーム送信ハンドラ
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -514,16 +600,52 @@ const ReportNew = () => {
     try {
       // 画像ファイルをアップロードしてURLを取得
       let imageUrls: string[] = [];
+      let photoUrls: { url: string; caption?: string; category: PhotoCategory }[] = [];
+      
+      // 1. 従来の画像アップロード処理
       if (formData.images.length > 0) {
-        // 一時的なIDを生成（本来はサーバーからのレスポンスで実際のIDを使用）
         const tempId = `temp-${Date.now()}`;
-        
-        // 画像のアップロード
         const uploadPromises = formData.images.map(file => 
           uploadReportImage(file, tempId)
         );
-        
         imageUrls = await Promise.all(uploadPromises);
+      }
+      
+      // 2. 拡張写真アップロード処理
+      if (formData.photos.length > 0) {
+        const tempId = `temp-${Date.now()}-photos`;
+        
+        // ファイルがある写真のみアップロード
+        const photoUploadPromises = formData.photos
+          .filter(photo => photo.file)
+          .map(async photo => {
+            if (photo.file) {
+              const url = await uploadReportImage(photo.file, tempId);
+              return {
+                url,
+                caption: photo.caption || '',
+                category: photo.category
+              };
+            }
+            return null;
+          });
+        
+        // すでにURLがある写真はそのまま使用
+        const existingPhotoUrls = formData.photos
+          .filter(photo => photo.url)
+          .map(photo => ({
+            url: photo.url!,
+            caption: photo.caption || '',
+            category: photo.category
+          }));
+        
+        const uploadedPhotoUrls = await Promise.all(photoUploadPromises);
+        photoUrls = [
+          ...existingPhotoUrls,
+          ...uploadedPhotoUrls.filter((item): item is { url: string; caption: string; category: PhotoCategory } => 
+            item !== null
+          )
+        ];
       }
 
       // 日報データの送信
@@ -532,17 +654,24 @@ const ReportNew = () => {
           site_id: formData.site_id,
           user_id: user.id,
           report_date: formData.report_date,
+          weather_type: formData.weather_type,
           weather: formData.weather,
           temperature: formData.temperature ? Number(formData.temperature) : undefined,
+          humidity: formData.humidity ? Number(formData.humidity) : undefined,
+          wind_speed: formData.wind_speed ? Number(formData.wind_speed) : undefined,
+          wind_direction: formData.wind_direction,
           work_start_time: formData.work_start_time,
           work_end_time: formData.work_end_time,
           manpower: formData.manpower ? Number(formData.manpower) : undefined,
           progress_percentage: formData.progress_percentage ? Number(formData.progress_percentage) : undefined,
+          previous_progress_percentage: previousProgress !== null ? previousProgress : undefined,
           work_description: formData.work_description,
           issues: formData.issues,
+          issue_status: formData.issue_status,
           next_day_plan: formData.next_day_plan,
           safety_checks: formData.safety_checks,
-          images: imageUrls
+          images: imageUrls,
+          photos: photoUrls
         },
         formData.materials,
         formData.equipment,
@@ -615,36 +744,29 @@ const ReportNew = () => {
                   className="w-full p-2 border border-gray-300 rounded"
                 />
               </div>
+            </div>
+          </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  天候
-                </label>
-                <input
-                  type="text"
-                  name="weather"
-                  value={formData.weather}
-                  onChange={handleChange}
-                  placeholder="例: 晴れ、雨、曇りなど"
-                  className="w-full p-2 border border-gray-300 rounded"
-                />
-              </div>
+          {/* 天候情報セクション */}
+          <WeatherInfoInput 
+            weatherType={formData.weather_type}
+            weather={formData.weather}
+            temperature={formData.temperature}
+            humidity={formData.humidity}
+            windSpeed={formData.wind_speed}
+            windDirection={formData.wind_direction}
+            onWeatherTypeChange={(value) => setFormData(prev => ({ ...prev, weather_type: value }))}
+            onWeatherChange={(value) => setFormData(prev => ({ ...prev, weather: value }))}
+            onTemperatureChange={(value) => setFormData(prev => ({ ...prev, temperature: value }))}
+            onHumidityChange={(value) => setFormData(prev => ({ ...prev, humidity: value }))}
+            onWindSpeedChange={(value) => setFormData(prev => ({ ...prev, wind_speed: value }))}
+            onWindDirectionChange={(value) => setFormData(prev => ({ ...prev, wind_direction: value }))}
+          />
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  気温 (℃)
-                </label>
-                <input
-                  type="number"
-                  name="temperature"
-                  value={formData.temperature}
-                  onChange={handleChange}
-                  placeholder="例: 25.5"
-                  step="0.1"
-                  className="w-full p-2 border border-gray-300 rounded"
-                />
-              </div>
-
+          {/* 作業時間セクション */}
+          <div className="mb-6">
+            <h3 className="text-lg font-medium mb-3">作業時間</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   作業開始時間
@@ -685,119 +807,103 @@ const ReportNew = () => {
                   className="w-full p-2 border border-gray-300 rounded"
                 />
               </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  進捗率 (%)
-                </label>
-                <input
-                  type="number"
-                  name="progress_percentage"
-                  value={formData.progress_percentage}
-                  onChange={handleChange}
-                  placeholder="例: 45.5"
-                  min="0"
-                  max="100"
-                  step="0.1"
-                  className="w-full p-2 border border-gray-300 rounded"
-                />
-              </div>
             </div>
           </div>
 
-          {/* 詳細情報セクション */}
-          <div className="mb-6">
-            <h2 className="text-xl font-semibold mb-4">作業内容</h2>
-            <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                作業内容の詳細 <span className="text-red-500">*</span>
-              </label>
-              <textarea
-                name="work_description"
-                value={formData.work_description}
-                onChange={handleChange}
-                required
-                rows={5}
-                className="w-full p-2 border border-gray-300 rounded"
-                placeholder="本日の作業内容を具体的に記入してください"
-              />
-            </div>
-
-            <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                問題点・課題
-              </label>
-              <textarea
-                name="issues"
-                value={formData.issues}
-                onChange={handleChange}
-                rows={3}
-                className="w-full p-2 border border-gray-300 rounded"
-                placeholder="発生した問題や課題があれば記入してください"
-              />
-            </div>
-
-            <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                明日の作業予定
-              </label>
-              <textarea
-                name="next_day_plan"
-                value={formData.next_day_plan}
-                onChange={handleChange}
-                rows={3}
-                className="w-full p-2 border border-gray-300 rounded"
-                placeholder="翌日の作業予定を記入してください"
-              />
-            </div>
-          </div>
-
-          {/* 資材・機材・作業員セクション */}
-          <div className="mb-6">
-            <h2 className="text-xl font-semibold mb-4">資材・機材・作業員</h2>
-            <MaterialsSection
-              materials={formData.materials}
-              onChange={materials => setFormData(prev => ({ ...prev, materials }))}
-            />
-            
-            <EquipmentSection
-              equipment={formData.equipment}
-              onChange={equipment => setFormData(prev => ({ ...prev, equipment }))}
-            />
-            
-            <WorkersSection
-              workers={formData.workers}
-              onChange={workers => setFormData(prev => ({ ...prev, workers }))}
-            />
-          </div>
-
-          {/* 安全確認事項セクション */}
-          <SafetyCheckSection
-            safetyChecks={formData.safety_checks}
-            onChange={safety_checks => setFormData(prev => ({ ...prev, safety_checks }))}
+          {/* 進捗状況セクション */}
+          <ProgressVisualizer
+            currentProgress={formData.progress_percentage}
+            previousProgress={previousProgress}
+            onProgressChange={(value) => setFormData(prev => ({ ...prev, progress_percentage: value }))}
           />
 
-          {/* 画像アップロードセクション */}
-          <ImageUploadSection
-            images={formData.images}
-            onImagesChange={images => setFormData(prev => ({ ...prev, images }))}
+          {/* 作業内容セクション */}
+          <div className="mb-6">
+            <h3 className="text-lg font-medium mb-3">作業内容 <span className="text-red-500">*</span></h3>
+            <textarea
+              name="work_description"
+              value={formData.work_description}
+              onChange={handleChange}
+              placeholder="本日の作業内容を詳細に記入してください"
+              required
+              className="w-full p-3 border border-gray-300 rounded h-32"
+            />
+          </div>
+
+          {/* 課題・問題点セクション */}
+          <IssueTracker
+            issues={formData.issues}
+            issueStatus={formData.issue_status}
+            onIssuesChange={(value) => setFormData(prev => ({ ...prev, issues: value }))}
+            onIssueStatusChange={(value) => setFormData(prev => ({ ...prev, issue_status: value }))}
+          />
+
+          {/* 明日の作業予定セクション */}
+          <div className="mb-6">
+            <h3 className="text-lg font-medium mb-3">明日の作業予定</h3>
+            <textarea
+              name="next_day_plan"
+              value={formData.next_day_plan}
+              onChange={handleChange}
+              placeholder="翌日の作業予定を記入してください"
+              className="w-full p-3 border border-gray-300 rounded h-32"
+            />
+          </div>
+
+          {/* 安全確認セクション */}
+          <SafetyCheckSection
+            safetyChecks={formData.safety_checks}
+            onChange={(safetyChecks) => setFormData(prev => ({ ...prev, safety_checks: safetyChecks }))}
+          />
+
+          {/* 写真アップロードセクション（拡張版） */}
+          <EnhancedPhotoUpload
+            photos={formData.photos}
+            onPhotosChange={handlePhotosChange}
+            maxPhotos={20}
+          />
+
+          {/* 資材使用記録セクション */}
+          <MaterialsSection
+            materials={formData.materials}
+            onChange={(materials) => setFormData(prev => ({ ...prev, materials }))}
+          />
+
+          {/* 機材使用記録セクション */}
+          <EquipmentSection
+            equipment={formData.equipment}
+            onChange={(equipment) => setFormData(prev => ({ ...prev, equipment }))}
+          />
+
+          {/* 作業員記録セクション */}
+          <WorkersSection
+            workers={formData.workers}
+            onChange={(workers) => setFormData(prev => ({ ...prev, workers }))}
           />
 
           {/* 送信ボタン */}
-          <div className="flex justify-end mt-8">
+          <div className="mt-8 flex justify-end">
             <button
               type="button"
               onClick={() => navigate('/report')}
-              className="px-4 py-2 border border-gray-300 rounded shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 mr-3"
+              className="mr-4 px-6 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
+              disabled={submitting}
             >
               キャンセル
             </button>
             <button
               type="submit"
+              className="px-6 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
               disabled={submitting}
-              className="px-4 py-2 border border-transparent rounded shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 disabled:bg-blue-300"
             >
-              {submitting ? '保存中...' : '日報を保存'}
+              {submitting ? (
+                <>
+                  <span className="inline-block animate-spin mr-2">⟳</span>
+                  保存中...
+                </>
+              ) : (
+                '日報を保存'
+              )}
             </button>
           </div>
         </form>
