@@ -157,6 +157,16 @@ const SiteFormModal = ({
                     </option>
                   ))}
                 </select>
+                <div className="mt-1">
+                  <a 
+                    href="/#/customers" 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="text-xs text-blue-600 hover:text-blue-800"
+                  >
+                    新規顧客を登録する
+                  </a>
+                </div>
               </div>
 
               <div>

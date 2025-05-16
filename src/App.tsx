@@ -21,6 +21,7 @@ const Reports = lazy(() => import('./pages/Reports'))
 const ReportMonthly = lazy(() => import('./pages/ReportMonthly'))
 const ReportDetail = lazy(() => import('./pages/ReportDetail'))
 const ConstructionSites = lazy(() => import('./pages/ConstructionSites'))
+const Customers = lazy(() => import('./pages/Customers'))
 
 // 仮のページコンポーネント（未実装ページ用）
 const PlaceholderPage = ({ title }: { title: string }) => (
@@ -93,6 +94,7 @@ function App() {
                 <Route path=":id" element={<ReportDetail />} />
               </Route>
               <Route path="sites" element={<ConstructionSites />} />
+              <Route path="customers" element={<Customers />} />
               <Route path="admin">
                 <Route path="master" element={<AdminMaster />} />
                 <Route path="settings" element={<AdminSettings />} />

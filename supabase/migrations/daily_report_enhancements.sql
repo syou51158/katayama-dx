@@ -67,4 +67,36 @@ WHERE issue_status IS NULL;
 
 -- 検索効率向上のための追加インデックス
 CREATE INDEX IF NOT EXISTS idx_construction_reports_progress_percentage ON construction_reports(progress_percentage);
-CREATE INDEX IF NOT EXISTS idx_construction_reports_report_date ON construction_reports(report_date); 
+CREATE INDEX IF NOT EXISTS idx_construction_reports_report_date ON construction_reports(report_date);
+
+-- 日報機能のRLSポリシーエンハンスメント
+
+-- construction_sitesテーブルに対するINSERT/UPDATE操作を許可するRLSポリシー
+CREATE POLICY "ユーザーは工事現場を追加可能" ON construction_sites
+  FOR INSERT WITH CHECK (true);
+
+CREATE POLICY "ユーザーは自分が管理する工事現場を編集可能" ON construction_sites
+  FOR UPDATE USING (
+    manager_id = auth.uid() OR
+    EXISTS (SELECT 1 FROM users WHERE id = auth.uid() AND role = 'admin')
+  );
+
+-- 既存ポリシーの補完として、管理者は全てのデータにアクセス可能に
+CREATE POLICY "管理者は全工事現場データを管理可能" ON construction_sites
+  FOR ALL USING (
+    EXISTS (SELECT 1 FROM users WHERE id = auth.uid() AND role = 'admin')
+  );
+
+-- 顧客テーブルに対するRLSポリシー
+ALTER TABLE customers ENABLE ROW LEVEL SECURITY;
+
+-- 顧客データの閲覧は全ユーザー可能
+CREATE POLICY "ユーザーは顧客データを閲覧可能" ON customers
+  FOR SELECT USING (true);
+
+-- 顧客データの追加・編集はすべてのユーザーが可能
+CREATE POLICY "ユーザーは顧客データを追加可能" ON customers
+  FOR INSERT WITH CHECK (true);
+
+CREATE POLICY "ユーザーは顧客データを編集可能" ON customers
+  FOR UPDATE USING (true); 
