@@ -10,6 +10,20 @@ console.log('Supabase URL:', supabaseUrl);
 console.log('Supabase Key:', supabaseAnonKey ? supabaseAnonKey.substring(0, 10) + '...' : 'not available');
 console.log('Supabase Key is valid:', supabaseAnonKey?.includes('.') || false);
 
+// 認証後にリダイレクトする関数
+function redirectAfterAuth() {
+  console.log('認証成功後にダッシュボードへリダイレクト');
+  
+  // GitHub Pagesの場合とローカル環境で適切なURLを構築
+  const isGitHubPages = window.location.hostname.includes('github.io');
+  const baseUrl = isGitHubPages
+    ? `${window.location.origin}${window.location.pathname.replace(/\/$/, '')}/`
+    : `${window.location.origin}/`;
+    
+  console.log('Redirecting to dashboard with base URL:', baseUrl);
+  window.location.href = `${baseUrl}#/dashboard`;
+}
+
 // クライアント作成を試みる
 let supabaseClient;
 try {
@@ -28,6 +42,16 @@ try {
   );
   console.log('Supabaseクライアント作成成功');
   
+  // 認証状態の変更を監視
+  supabaseClient.auth.onAuthStateChange((event, session) => {
+    console.log('Auth state change detected in Supabase client:', event);
+    if (event === 'SIGNED_IN' && session) {
+      console.log('User signed in, redirecting to dashboard');
+      // 少し遅延させてセッション確立を確実にする
+      setTimeout(() => redirectAfterAuth(), 300);
+    }
+  });
+  
   // マジックリンクからのリダイレクト処理を強化
   // URLにアクセストークンパラメータがある場合、ログイン後の処理
   const url = new URL(window.location.href);
@@ -40,12 +64,12 @@ try {
     if (url.hash.includes('error')) {
       console.error('認証エラー:', url.hash);
     } else {
-      // 成功時の処理 - URLパラメータ処理完了後にダッシュボードへリダイレクト
-      // 少し遅延させてセッション確立を確実にする
+      // 成功時は少し遅延させてSIGNED_INイベントを処理できるようにする
       setTimeout(() => {
-        console.log('認証成功後にダッシュボードへリダイレクト');
-        window.location.href = '/#/dashboard';
-      }, 500);
+        // 念のためSIGNED_INイベントが処理されなかった場合に備えて直接リダイレクト
+        console.log('認証パラメータ処理完了後の安全策としてリダイレクト');
+        redirectAfterAuth();
+      }, 800);
     }
   }
   

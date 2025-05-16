@@ -31,12 +31,19 @@ export default defineConfig(({ mode }) => {
     build: {
       outDir: 'dist',
       assetsDir: 'assets',
+      // 相対パスを使用するよう設定
+      assetsInlineLimit: 0,
+      cssCodeSplit: true,
+      sourcemap: false,
       rollupOptions: {
         input: {
           main: resolve(__dirname, 'index.html'),
         },
         output: {
           manualChunks: undefined,
+          entryFileNames: 'assets/[name].[hash].js',
+          chunkFileNames: 'assets/[name].[hash].js',
+          assetFileNames: 'assets/[name].[hash].[ext]',
         },
       },
       // MIMEタイプの問題を解決するための設定
