@@ -3,6 +3,36 @@ import { customersApi } from '../lib/constructionApi';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
 
+// 成功メッセージを表示するコンポーネント
+const SuccessMessage = ({ message, onClose }: { message: string, onClose: () => void }) => {
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      onClose();
+    }, 5000); // 5秒後に自動的に閉じる
+
+    return () => clearTimeout(timer);
+  }, [onClose]);
+
+  return (
+    <div className="fixed top-5 right-5 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded z-50 shadow-lg flex items-center">
+      <div className="mr-3">
+        <svg className="h-5 w-5 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+        </svg>
+      </div>
+      <span>{message}</span>
+      <button 
+        onClick={onClose} 
+        className="ml-4 text-green-700 hover:text-green-900"
+      >
+        <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+        </svg>
+      </button>
+    </div>
+  );
+};
+
 // 顧客登録/編集モーダル
 const CustomerFormModal = ({
   isOpen,
@@ -202,6 +232,7 @@ const Customers = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [currentCustomer, setCurrentCustomer] = useState<any | undefined>(undefined);
   const [searchTerm, setSearchTerm] = useState('');
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   const fetchCustomers = async () => {
     setLoading(true);
@@ -248,6 +279,7 @@ const Customers = () => {
           .eq('id', currentCustomer.id);
 
         if (error) throw error;
+        setSuccessMessage(`「${formData.name}」の情報を更新しました`);
       } else {
         // 新規顧客の作成
         const { error } = await supabase
@@ -262,6 +294,7 @@ const Customers = () => {
           }]);
 
         if (error) throw error;
+        setSuccessMessage(`「${formData.name}」を新規登録しました`);
       }
       await fetchCustomers();
     } catch (error: any) {
@@ -278,8 +311,21 @@ const Customers = () => {
            (customer.email && customer.email.toLowerCase().includes(searchTerm.toLowerCase()));
   });
 
+  // 成功メッセージを閉じる
+  const closeSuccessMessage = () => {
+    setSuccessMessage(null);
+  };
+
   return (
     <div className="p-6">
+      {/* 成功メッセージ */}
+      {successMessage && (
+        <SuccessMessage 
+          message={successMessage}
+          onClose={closeSuccessMessage}
+        />
+      )}
+
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold">顧客管理</h1>
         <button
@@ -291,8 +337,16 @@ const Customers = () => {
       </div>
 
       {error && (
-        <div className="mb-6 p-4 bg-red-100 text-red-700 rounded">
-          {error}
+        <div className="mb-6 p-4 bg-red-100 text-red-700 rounded flex justify-between items-center">
+          <div>{error}</div>
+          <button 
+            onClick={() => setError('')}
+            className="text-red-700 hover:text-red-900"
+          >
+            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
         </div>
       )}
 

@@ -271,6 +271,36 @@ const StatusBadge = ({ status }: { status: ConstructionSiteStatus }) => {
   );
 };
 
+// 成功メッセージを表示するコンポーネント
+const SuccessMessage = ({ message, onClose }: { message: string, onClose: () => void }) => {
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      onClose();
+    }, 5000); // 5秒後に自動的に閉じる
+
+    return () => clearTimeout(timer);
+  }, [onClose]);
+
+  return (
+    <div className="fixed top-5 right-5 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded z-50 shadow-lg flex items-center">
+      <div className="mr-3">
+        <svg className="h-5 w-5 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+        </svg>
+      </div>
+      <span>{message}</span>
+      <button 
+        onClick={onClose} 
+        className="ml-4 text-green-700 hover:text-green-900"
+      >
+        <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+        </svg>
+      </button>
+    </div>
+  );
+};
+
 // メイン画面コンポーネント
 const ConstructionSites = () => {
   const [sites, setSites] = useState<ConstructionSite[]>([]);
@@ -280,6 +310,7 @@ const ConstructionSites = () => {
   const [currentSite, setCurrentSite] = useState<ConstructionSite | undefined>(undefined);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   const fetchSites = async () => {
     setLoading(true);
@@ -309,14 +340,22 @@ const ConstructionSites = () => {
   };
 
   const handleSave = async (formData: any) => {
-    if (currentSite) {
-      // 既存現場の更新
-      await constructionSitesApi.updateSite(currentSite.id, formData);
-    } else {
-      // 新規現場の作成
-      await constructionSitesApi.createSite(formData);
+    try {
+      if (currentSite) {
+        // 既存現場の更新
+        await constructionSitesApi.updateSite(currentSite.id, formData);
+        setSuccessMessage(`「${formData.name}」の情報を更新しました`);
+      } else {
+        // 新規現場の作成
+        await constructionSitesApi.createSite(formData);
+        setSuccessMessage(`「${formData.name}」を新規登録しました`);
+      }
+      await fetchSites();
+    } catch (err: any) {
+      console.error('保存中にエラーが発生しました', err);
+      setError(err.message || '保存中にエラーが発生しました');
+      throw err; // モーダル側でエラー処理できるように再スロー
     }
-    await fetchSites();
   };
 
   // 検索とフィルタリング
@@ -330,8 +369,21 @@ const ConstructionSites = () => {
     return matchesSearch && matchesStatus;
   });
 
+  // 成功メッセージを閉じる
+  const closeSuccessMessage = () => {
+    setSuccessMessage(null);
+  };
+
   return (
     <div className="p-6">
+      {/* 成功メッセージ */}
+      {successMessage && (
+        <SuccessMessage 
+          message={successMessage}
+          onClose={closeSuccessMessage}
+        />
+      )}
+
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold">工事現場管理</h1>
         <button
@@ -343,8 +395,16 @@ const ConstructionSites = () => {
       </div>
 
       {error && (
-        <div className="mb-6 p-4 bg-red-100 text-red-700 rounded">
-          {error}
+        <div className="mb-6 p-4 bg-red-100 text-red-700 rounded flex justify-between items-center">
+          <div>{error}</div>
+          <button 
+            onClick={() => setError('')}
+            className="text-red-700 hover:text-red-900"
+          >
+            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
         </div>
       )}
 
