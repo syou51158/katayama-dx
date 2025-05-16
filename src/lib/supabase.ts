@@ -10,28 +10,16 @@ console.log('Supabase URL:', supabaseUrl);
 console.log('Supabase Key:', supabaseAnonKey ? supabaseAnonKey.substring(0, 10) + '...' : 'not available');
 console.log('Supabase Key is valid:', supabaseAnonKey?.includes('.') || false);
 
-// 環境に応じたダッシュボードURLを生成
-function getDashboardUrl() {
-  const hostname = window.location.hostname;
-  const origin = window.location.origin;
-  const isLocalhost = hostname === 'localhost' || hostname === '127.0.0.1';
-  const isGitHubPages = hostname.includes('github.io');
-  
-  let baseUrl;
-  if (isLocalhost) {
-    baseUrl = `${origin}/`;
-  } else if (isGitHubPages) {
-    const basePath = window.location.pathname.endsWith('/') 
-      ? window.location.pathname 
-      : window.location.pathname + '/';
-    baseUrl = `${origin}${basePath}`;
-  } else {
-    baseUrl = `${origin}${window.location.pathname}`;
-  }
-  
-  const dashboardUrl = `${baseUrl}#/dashboard`;
-  console.log('生成されたダッシュボードURL:', dashboardUrl);
-  return dashboardUrl;
+// 認証リダイレクト検出
+const hash = window.location.hash;
+const hasAuthParams = hash.includes('access_token=') || hash.includes('type=magiclink');
+
+if (hasAuthParams) {
+  console.log('【supabase.ts】認証パラメータを検出:', hash);
+  // 強制的にダッシュボードに遷移
+  window.location.href = `${window.location.origin}/#/dashboard`;
+  // 処理停止
+  throw new Error('認証パラメータを検出。ダッシュボードに遷移中...');
 }
 
 // クライアント作成を試みる
@@ -47,7 +35,6 @@ try {
         detectSessionInUrl: true,
         flowType: 'pkce',
         storage: localStorage,
-        storageKey: 'katayama-dx-auth',
         debug: true
       }
     }
@@ -59,51 +46,10 @@ try {
     console.log(`Auth event detected: ${event}`, session ? 'セッションあり' : 'セッションなし');
     
     if (event === 'SIGNED_IN' && session) {
-      console.log('サインイン検出:', session.user.email);
-      
-      // サインイン直後はダッシュボードに遷移
-      const dashboardUrl = getDashboardUrl();
-      window.location.href = dashboardUrl;
+      console.log('サインイン検出!');
+      window.location.href = `${window.location.origin}/#/dashboard`;
     }
   });
-  
-  // 認証パラメータ検出
-  const hash = window.location.hash;
-  const hasAuthParams = hash.includes('access_token=') || 
-                       hash.includes('type=recovery') || 
-                       hash.includes('type=magiclink');
-  
-  if (hasAuthParams) {
-    console.log('認証パラメータを検出:', hash);
-    
-    // エラーチェック
-    if (hash.includes('error=') || hash.includes('error_description=')) {
-      console.error('認証エラーを検出:', hash);
-    } else {
-      // 認証処理実行
-      (async () => {
-        try {
-          // セッション取得を試みる
-          const { data, error } = await supabaseClient.auth.getSession();
-          
-          if (error) {
-            console.error('セッション取得エラー:', error);
-          } else if (data.session) {
-            console.log('有効なセッションを取得:', data.session.user.email);
-            
-            // 明示的にダッシュボードに遷移
-            const dashboardUrl = getDashboardUrl();
-            console.log('ダッシュボードへリダイレクト:', dashboardUrl);
-            window.location.href = dashboardUrl;
-          } else {
-            console.log('セッションが見つかりませんでした');
-          }
-        } catch (err) {
-          console.error('認証処理中のエラー:', err);
-        }
-      })();
-    }
-  }
   
 } catch (error) {
   console.error('Supabaseクライアント作成エラー:', error);

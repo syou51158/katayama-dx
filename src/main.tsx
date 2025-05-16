@@ -5,6 +5,26 @@ import './index.css'
 import { AuthProvider } from './contexts/AuthContext'
 import { supabase } from './lib/supabase'
 
+// 最優先実行 - URLに認証パラメータがあるか確認
+const currentHash = window.location.hash;
+const hasAuthRedirect = (
+  currentHash.includes('access_token=') || 
+  currentHash.includes('type=magiclink') || 
+  currentHash.includes('type=recovery')
+);
+
+// 認証リダイレクトが検出された場合、即時にダッシュボードに遷移
+if (hasAuthRedirect) {
+  console.log('【最優先処理】認証リダイレクトを検出:', currentHash);
+  // ダッシュボードURLを構築
+  const origin = window.location.origin;
+  // 強制的にダッシュボードに遷移
+  window.location.href = `${origin}/#/dashboard`;
+  
+  // 以降の処理は実行しない
+  throw new Error('認証リダイレクト処理中...');
+}
+
 // 環境に応じたダッシュボードURLを生成
 function getDashboardUrl() {
   const hostname = window.location.hostname;

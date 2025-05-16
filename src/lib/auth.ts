@@ -1,40 +1,20 @@
 import { supabase } from './supabase';
 
-// リダイレクトURL取得関数（環境に応じて適切なURLを返す）
+// リダイレクトURL取得関数（ローカル環境向けにシンプル化）
 function getRedirectUrl(path: string): string {
-  // 現在のオリジンを取得
+  // ローカル環境での最もシンプルなリダイレクトURL
   const origin = window.location.origin;
-  const hostname = window.location.hostname;
-  console.log('Current origin:', origin);
-  console.log('Current hostname:', hostname);
   
-  let redirectUrl;
-  const isLocalhost = hostname === 'localhost' || hostname === '127.0.0.1';
+  // 最もシンプルな形式のURLを生成
+  const redirectUrl = `${origin}/#${path}`;
+  console.log('シンプル化されたリダイレクトURL:', redirectUrl);
   
-  if (isLocalhost) {
-    // ローカル環境向け - 開発サーバーのデフォルトポートを含む
-    redirectUrl = `${origin}/#${path}`;
-    console.log('ローカル環境用リダイレクトURL:', redirectUrl);
-  } else if (hostname.includes('github.io')) {
-    // GitHub Pages環境向け
-    const basePath = window.location.pathname.endsWith('/') 
-      ? window.location.pathname 
-      : window.location.pathname + '/';
-    redirectUrl = `${origin}${basePath}#${path}`;
-    console.log('GitHub Pages環境用リダイレクトURL:', redirectUrl);
-  } else {
-    // その他の環境向け - 汎用的な対応
-    redirectUrl = `${origin}${window.location.pathname}#${path}`;
-    console.log('その他の環境用リダイレクトURL:', redirectUrl);
-  }
-  
-  console.log('最終的に生成されたリダイレクトURL:', redirectUrl);
   return redirectUrl;
 }
 
 // メールリンクでのサインイン
 export async function signInWithEmail(email: string) {
-  // 環境に応じたリダイレクトURLを生成
+  // シンプルなリダイレクトURLを生成
   const redirectUrl = getRedirectUrl('/dashboard');
   console.log('サインイン用リダイレクトURL:', redirectUrl);
   
