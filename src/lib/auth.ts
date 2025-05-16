@@ -4,17 +4,26 @@ import { supabase } from './supabase';
 function getRedirectUrl(path: string): string {
   // 現在のオリジンを取得
   const origin = window.location.origin;
+  const hostname = window.location.hostname;
   console.log('Current origin:', origin);
+  console.log('Current hostname:', hostname);
   
-  // GitHub Pagesの場合はハッシュルーターを考慮
-  const basePath = window.location.pathname.endsWith('/') 
-    ? window.location.pathname 
-    : window.location.pathname + '/';
+  let redirectUrl;
   
-  // ハッシュルーターを使用しているため、リダイレクト先には#を含める
-  const redirectUrl = `${origin}${basePath}#${path}`;
+  // GitHub Pagesの場合（github.ioドメインかどうかで判断）
+  if (hostname.includes('github.io')) {
+    // GitHub Pages環境ではフルパスとハッシュルーターを使用
+    const basePath = window.location.pathname.endsWith('/') 
+      ? window.location.pathname 
+      : window.location.pathname + '/';
+    redirectUrl = `${origin}${basePath}#${path}`;
+  } else {
+    // ローカル環境では単純なパス結合
+    // ハッシュルーターなので#を含める
+    redirectUrl = `${origin}/#${path}`;
+  }
+  
   console.log('Generated redirect URL:', redirectUrl);
-  
   return redirectUrl;
 }
 
