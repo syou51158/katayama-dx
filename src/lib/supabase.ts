@@ -10,16 +10,11 @@ console.log('Supabase URL:', supabaseUrl);
 console.log('Supabase Key:', supabaseAnonKey ? supabaseAnonKey.substring(0, 10) + '...' : 'not available');
 console.log('Supabase Key is valid:', supabaseAnonKey?.includes('.') || false);
 
-// 認証リダイレクト検出
-const hash = window.location.hash;
-const hasAuthParams = hash.includes('access_token=') || hash.includes('type=magiclink');
-
-if (hasAuthParams) {
-  console.log('【supabase.ts】認証パラメータを検出:', hash);
-  // 強制的にダッシュボードに遷移
-  window.location.href = `${window.location.origin}/#/dashboard`;
-  // 処理停止
-  throw new Error('認証パラメータを検出。ダッシュボードに遷移中...');
+// ダッシュボードへリダイレクトする関数
+function redirectToDashboard() {
+  const origin = window.location.origin;
+  console.log('ダッシュボードへリダイレクト処理実行');
+  window.location.href = `${origin}/#/dashboard`;
 }
 
 // クライアント作成を試みる
@@ -46,8 +41,13 @@ try {
     console.log(`Auth event detected: ${event}`, session ? 'セッションあり' : 'セッションなし');
     
     if (event === 'SIGNED_IN' && session) {
-      console.log('サインイン検出!');
-      window.location.href = `${window.location.origin}/#/dashboard`;
+      console.log('サインイン検出:', session.user?.email);
+      
+      // セッションが検出されたらダッシュボードにリダイレクト
+      // main.tsxにも同様の処理があるが、どちらかが動作するように冗長化
+      setTimeout(() => {
+        redirectToDashboard();
+      }, 500);
     }
   });
   

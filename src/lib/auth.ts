@@ -1,20 +1,18 @@
 import { supabase } from './supabase';
 
-// リダイレクトURL取得関数（ローカル環境向けにシンプル化）
+// リダイレクトURL取得関数（最もシンプルで確実な方法）
 function getRedirectUrl(path: string): string {
-  // ローカル環境での最もシンプルなリダイレクトURL
+  // 常に絶対パスでURLを構築（ローカル環境でも動作する最も確実な方法）
   const origin = window.location.origin;
-  
-  // 最もシンプルな形式のURLを生成
   const redirectUrl = `${origin}/#${path}`;
-  console.log('シンプル化されたリダイレクトURL:', redirectUrl);
   
+  console.log('認証用リダイレクトURL生成:', redirectUrl);
   return redirectUrl;
 }
 
 // メールリンクでのサインイン
 export async function signInWithEmail(email: string) {
-  // シンプルなリダイレクトURLを生成
+  // 最もシンプルなリダイレクトURLを生成
   const redirectUrl = getRedirectUrl('/dashboard');
   console.log('サインイン用リダイレクトURL:', redirectUrl);
   
